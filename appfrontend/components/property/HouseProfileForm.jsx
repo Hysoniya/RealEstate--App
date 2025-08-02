@@ -9,7 +9,7 @@ import {
   StyleSheet
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-
+import Toast from 'react-native-toast-message';
 
 const HouseProfileForm = ({
   formData,
@@ -30,7 +30,11 @@ const HouseProfileForm = ({
 
     for (const field of requiredFields) {
       if (!formData[field]) {
-        alert('Please fill in all the required fields before proceeding.');
+        
+        Toast.show({
+          type:'error',
+          text1:'Please fill in all the required fields before proceeding'
+        })
         return;
       }
     }

@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Platform
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 
 const PricingForm = ({ formData, handleInputChange, prevStep, handleSubmit, loading }) => {
@@ -21,7 +22,12 @@ const PricingForm = ({ formData, handleInputChange, prevStep, handleSubmit, load
       !formData.proprietorPhone ||
       !formData.posterType
     ) {
-      Alert.alert('Validation Error', 'Please fill in all the required fields before submitting.');
+      // Alert.alert('Validation Error', 'Please fill in all the required fields before submitting.');
+      Toast.show({
+        type:'error',
+        text1:'Validation Error',
+        text2:'Please fill in all the required fields before submitting'
+      })
       return false;
     }
     return true;

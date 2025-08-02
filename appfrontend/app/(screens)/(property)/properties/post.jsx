@@ -4,7 +4,6 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  Alert,
   Dimensions,
   TouchableOpacity,
   SafeAreaView,
@@ -21,28 +20,10 @@ import PricingForm from "@/components/property/PricingForm";
 import * as ImagePicker from "expo-image-picker";
 import axios from "axios";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-
 import { router } from "expo-router";
+import Toast from 'react-native-toast-message';
 
-const { width, height } = Dimensions.get("window");
-
-// const Navbar_local = () => {
-//   const router = useRouter();
-//   return (
-//     <View style={{ flexDirection: "row", alignItems: "center", padding: 16, backgroundColor: "#784dc6" }}>
-//       <TouchableOpacity
-//         onPress={() => router.back()}
-//         style={{ marginRight: 12, padding: 4 }}
-//         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-//       >
-//         <MaterialCommunityIcons name="arrow-left" size={28} color="white" />
-//       </TouchableOpacity>
-//       <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 20, flex: 1 }}>
-//         My Appointments
-//       </Text>
-//     </View>
-//   );
-// };
+const { width, height } = Dimensions.get('window');
 
 const Post = () => {
   const [step, setStep] = useState(1);
@@ -153,16 +134,29 @@ const Post = () => {
     });
 
     try {
-      const baseURL = process.env.EXPO_PUBLIC_BACKEND_URL;
-      await axios.post(`${baseURL}/api/property`, combinedFormData, {
-        headers: { "Content-Type": "multipart/form-data" },
+
+     
+
+      const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+      await axios.post(`${BASE_URL}/api/property`, combinedFormData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      Alert.alert("Success", "Property listed successfully!");
-      router.push("/");
+      
+      Toast.show({
+      type: 'success',
+      text1: 'Property listed successfully!'
+    });
+      // router.push('/user');
+      router.back()
     } catch (err) {
       console.error(err);
-      Alert.alert("Error", "Failed to list property");
+      
+      Toast.show({
+      type: 'error',
+      text1: 'Failed to list property'
+    });
+
     } finally {
       setLoading(false);
     }

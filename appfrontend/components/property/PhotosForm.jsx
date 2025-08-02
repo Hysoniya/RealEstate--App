@@ -9,6 +9,7 @@ import {
   ScrollView,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import Toast from 'react-native-toast-message';
 
 const PhotosForm = ({
   selectedImages,
@@ -20,12 +21,17 @@ const PhotosForm = ({
   const pickImages = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      Alert.alert('Permission required', 'Please allow access to photo library');
+      // Alert.alert('Permission required', 'Please allow access to photo library');
+      Toast.show({
+        type: 'error',
+        text1: 'Permission required',
+        text2: 'Please allow access to photo library',
+      })
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-       mediaTypes: ['image', 'video'], 
+      mediaTypes: ['image', 'video'],
       allowsMultipleSelection: true, // Only iOS 14+
       quality: 1,
     });
@@ -38,10 +44,16 @@ const PhotosForm = ({
   };
 
   const handleNextStep = () => {
-    if (selectedImages.length >= 4) {
+    if (selectedImages.length >= 1) {
       nextStep();
     } else {
-      Alert.alert('Upload Required', 'Please upload at least 4 media items before proceeding.');
+      // Alert.alert('Upload Required', 'Please upload at least 4 media items before proceeding.');
+      Toast.show({
+        type: 'error',
+        text1: 'Upload Required',
+        text2: 'Please upload at least 1 media item before proceeding.',
+      });
+
     }
   };
 

@@ -5,20 +5,26 @@ import {
   TextInput,
   StyleSheet,
   TouchableOpacity,
-  Alert,
+  
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 const LocationDetailsForm = ({ formData, handleInputChange, nextStep, prevStep }) => {
   const handleNext = () => {
     if (formData.city && formData.address && formData.landmark) {
       nextStep();
     } else {
-      Alert.alert('Missing Fields', 'Please fill in all the fields before proceeding.');
+     
+      Toast.show({
+        type:'error',
+        text1:'Missing Fields',
+        text2:'Please fill in all the fields before proceeding'
+      })
     }
   };
 
   const handleBack = () => {
-    prevStep(); // This navigates to the previous form step
+    prevStep(); 
   };
 
   return (

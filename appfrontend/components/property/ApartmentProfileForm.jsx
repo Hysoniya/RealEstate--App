@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import Toast from 'react-native-toast-message';
 
 const ApartmentProfileForm = ({
   formData,
@@ -26,7 +27,11 @@ const ApartmentProfileForm = ({
 
     for (const field of requiredFields) {
       if (!formData[field]) {
-        Alert.alert('Missing Fields', 'Please fill in all the required fields before proceeding.');
+        // Alert.alert('Missing Fields', 'Please fill in all the required fields before proceeding.');
+        Toast.show({
+          type: 'error',
+          text1: 'Please fill in all the required fields before proceeding'
+        })
         return;
       }
     }

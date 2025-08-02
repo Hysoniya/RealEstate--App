@@ -8,13 +8,19 @@ import {
   Alert,
   Pressable,
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 const BasicDetailsForm = ({ formData, handleInputChange, nextStep }) => {
   const handleNextStep = () => {
     if (formData.title && formData.purpose && formData.propertyType && formData.description) {
       nextStep();
     } else {
-      Alert.alert('Missing Fields', 'Please fill in all the fields before proceeding.');
+      // Alert.alert('Missing Fields', 'Please fill in all the fields before proceeding.');
+      Toast.show({
+        type:'error',
+        text1:'Missing Fields',
+        text2:'Please fill in all the fields before proceeding'
+      })
     }
   };
 
