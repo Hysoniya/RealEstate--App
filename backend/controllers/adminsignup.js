@@ -9,7 +9,7 @@ adminSignupRouter.post(
   authenticate,
   authorizeAdmin,
   async (req, res) => {
-    const { adminId, password } = req.body;
+    const { name,adminId, password } = req.body;
 
     if (!adminId || !password) {
       return res
@@ -26,12 +26,12 @@ adminSignupRouter.post(
 
       const saltRounds = 10;
       const passwordHash = await bcrypt.hash(password, saltRounds);
-
+      console.log("req received",name)
       const newAdmin = new Admin({
         adminId,
         password: passwordHash,
         email: `${adminId}@mail.com`,
-        fullName: "",
+        fullName: name,
         phoneNumber: "",
         buyersId: [],
         sellersId: [],
@@ -46,7 +46,7 @@ adminSignupRouter.post(
   }
 );
 
-adminSignupRouter.get("/", authenticate, authorizeAdmin, async (req, res) => {
+adminSignupRouter.get("/",authenticate, async (req, res) => {
   try {
     const admins = await Admin.find()
       .populate("buyersId", "name email")
@@ -62,10 +62,9 @@ adminSignupRouter.get("/", authenticate, authorizeAdmin, async (req, res) => {
 adminSignupRouter.delete(
   "/:id",
   authenticate,
-  authorizeAdmin,
   async (request, response) => {
     const { id } = request.params;
-
+    console.log("req")
     try {
       const deletedUser = await Admin.findByIdAndDelete(id);
       if (deletedUser) {

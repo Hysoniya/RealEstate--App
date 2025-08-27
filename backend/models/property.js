@@ -32,7 +32,7 @@ const propertySchema = new mongoose.Schema({
   floors: { type: String },
   availabilityStatus: {
     type: String,
-    enum: ["Ready to Move", "Under Construction"],
+    enum: ["Ready to Move", "Under Construction","Immediate"],
   },
 
   purpose: {

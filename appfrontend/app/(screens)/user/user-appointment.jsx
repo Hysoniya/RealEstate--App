@@ -1,20 +1,35 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, FlatList, TouchableOpacity, Alert, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  FlatList,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+  Image,
+} from "react-native";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
-import LottieView from "lottie-react-native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Navbar from "@/components/home/Navbar";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
+// Replace with your actual API URL
+const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
-// Stub components for mobile UI
 const Navbar_local = () => {
   const router = useRouter();
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", padding: 16, backgroundColor: "#784dc6" }}>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        padding: 16,
+        backgroundColor: "#784dc6",
+      }}
+    >
       <TouchableOpacity
         onPress={() => router.back()}
         style={{ marginRight: 12, padding: 4 }}
@@ -22,24 +37,29 @@ const Navbar_local = () => {
       >
         <MaterialCommunityIcons name="arrow-left" size={28} color="white" />
       </TouchableOpacity>
-      <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 20, flex: 1 }}>
+      <Text
+        style={{
+          color: "#fff",
+          fontWeight: "bold",
+          fontSize: 20,
+          flex: 1,
+        }}
+      >
         My Appointments
       </Text>
     </View>
   );
 };
-// Sidebar isn't common in mobile, skip or use a bottom tab bar if needed.
 
-const LottieAnimation = ({ animationLink, style }) => (
-  <LottieView
-    source={{ uri: animationLink }}
-    autoPlay
-    loop
+const EmptyStateAnimation = ({ style }) => (
+  <Image
+    source={{
+      uri: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZ3dlcGV0cmFzaDgwazFiaTQyZnhybWF3NWtvZXk0YTBmM3JzZXI3cXNtNyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/qgQUggAC3Pfv687qPC/giphy.gif",
+    }}
+    resizeMode="contain"
     style={[{ width: 180, height: 180 }, style]}
   />
 );
-
-const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL; // Change to actual API root
 
 export default function UserAppointments() {
   const [appointments, setAppointments] = useState([]);
@@ -48,16 +68,17 @@ export default function UserAppointments() {
 
   useEffect(() => {
     const getToken = async () => {
-    const token = await AsyncStorage.getItem("authToken") || null;
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        const id = decoded._id || decoded.id;
-        setUserId(id);
-      } catch (error) {
-        console.error("Invalid token:", error);
+      const token = (await AsyncStorage.getItem("authToken")) || null;
+      if (token) {
+        try {
+          const decoded = jwtDecode(token);
+          const id = decoded._id || decoded.id;
+          setUserId(id);
+        } catch (error) {
+          console.error("Invalid token:", error);
+        }
       }
-    }}
+    };
     getToken();
   }, []);
 
@@ -98,8 +119,13 @@ export default function UserAppointments() {
               await axios.delete(`${API_URL}/api/appointments/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
-              setAppointments((prev) => prev.filter((appt) => appt._id !== id));
-              Toast.show({ type: "error", text1: "Appointment Deleted" });
+              setAppointments((prev) =>
+                prev.filter((appt) => appt._id !== id)
+              );
+              Toast.show({
+                type: "error",
+                text1: "Appointment Deleted",
+              });
             } catch (error) {
               console.error("Error deleting appointment:", error);
             }
@@ -120,19 +146,26 @@ export default function UserAppointments() {
       <Text>Email: {item.email}</Text>
       <Text>Phone: {item.phoneNumber}</Text>
       <Text>
-        Date: {item.createdAt && new Date(item.createdAt).toLocaleDateString()}
+        Date:{" "}
+        {item.createdAt &&
+          new Date(item.createdAt).toLocaleDateString()}
       </Text>
       <Text>
-        Time: {item.createdAt && new Date(item.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+        Time:{" "}
+        {item.createdAt &&
+          new Date(item.createdAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
       </Text>
-      <Text>Status: <Text style={styles.status}>{item.status || "Pending"}</Text></Text>
+      <Text>
+        Status: <Text style={styles.status}>{item.status || "Pending"}</Text>
+      </Text>
     </View>
   );
 
   return (
     <View style={{ flex: 1, backgroundColor: "#f4f4fa" }}>
-        {/* Navbar Component */}
-        {/* <Navbar /> */}
       <Navbar_local />
       <View style={{ flex: 1, padding: 16 }}>
         {loading ? (
@@ -142,11 +175,10 @@ export default function UserAppointments() {
           </View>
         ) : appointments.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <LottieAnimation
-              animationLink="https://lottie.host/2bc9990e-d2fb-4fd7-adf1-0a31c295f944/S3gYyygOxW.json"
-              style={{ alignSelf: "center" }}
-            />
-            <Text style={styles.txt}>You haven’t booked any appointments yet!</Text>
+            <EmptyStateAnimation style={{ alignSelf: "center" }} />
+            <Text style={styles.txt}>
+              You haven’t booked any appointments yet!
+            </Text>
           </View>
         ) : (
           <FlatList

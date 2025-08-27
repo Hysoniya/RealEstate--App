@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -10,94 +10,164 @@ import {
   Platform,
   Alert,
   ScrollView,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 const AppointmentForm = ({ onClose }) => {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    propertyType: '',
-    budget: '',
-    preferredDate: '',
-    preferredTime: '',
-    message: '',
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    propertyType: "",
+    budget: "",
+    preferredDate: "",
+    preferredTime: "",
+    message: "",
   });
   const [loading, setLoading] = useState(false);
 
-  const propertyTypes = ['1 BHK', '2 BHK', '3 BHK', '4 BHK', 'Villa', 'Plot'];
+  const propertyTypes = ["1 BHK", "2 BHK", "3 BHK", "4 BHK", "Villa", "Plot"];
   const budgetRanges = [
-    'Under ₹25 L', '₹25L - ₹50L', '₹50L - ₹75L', 
-    '₹75L - ₹1 Cr', '₹1 Cr - ₹2 Cr', 'Above ₹2 Cr'
+    "Under ₹25 L",
+    "₹25L - ₹50L",
+    "₹50L - ₹75L",
+    "₹75L - ₹1 Cr",
+    "₹1 Cr - ₹2 Cr",
+    "Above ₹2 Cr",
   ];
   const timeSlots = [
-    '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
-    '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'
+    "9:00 AM",
+    "10:00 AM",
+    "11:00 AM",
+    "12:00 PM",
+    "2:00 PM",
+    "3:00 PM",
+    "4:00 PM",
+    "5:00 PM",
   ];
 
   const updateFormData = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = async () => {
-    const { firstName, lastName, email, phone } = formData;
+ const handleSubmit = async () => {
+  const { firstName, lastName, email, phone } = formData;
 
-    if (!firstName || !lastName || !email || !phone) {
-      Alert.alert('Error', 'Please fill in all required fields');
-      return;
-    }
+  // Validate required fields from schema
+  if (!firstName || !lastName || !email || !phone) {
+    Alert.alert("Error", "Please fill in all required fields");
+    return;
+  }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
-      return;
-    }
+  // Email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    Alert.alert("Error", "Please enter a valid email address");
+    return;
+  }
 
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!phoneRegex.test(phone.replace(/\D/g, ''))) {
-      Alert.alert('Error', 'Please enter a valid 10-digit phone number');
-      return;
-    }
+  // Phone validation
+  const phoneRegex = /^[0-9]{10}$/;
+  if (!phoneRegex.test(phone.replace(/\D/g, ""))) {
+    Alert.alert("Error", "Please enter a valid 10-digit phone number");
+    return;
+  }
 
-    setLoading(true);
+  setLoading(true);
+  const apiUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
 
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      Alert.alert('Success!', 'Your appointment has been booked successfully.', [
-        { text: 'OK', onPress: onClose }
-      ]);
-
-      setFormData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        propertyType: '',
-        budget: '',
-        preferredDate: '',
-        preferredTime: '',
-        message: '',
-      });
-    } catch (error) {
-      Alert.alert('Error', 'Failed to book appointment. Please try again.');
-    } finally {
+  try {
+    // Get token and validate
+    const token = await AsyncStorage.getItem("authToken");
+    if (!token) {
+      Alert.alert("Error", "Authentication token not found. Please log in again.");
       setLoading(false);
+      return;
     }
-  };
+
+    // Prepare data according to AppointmentSchema
+
+    // firstName, lastName, email, phone --> backend expected fields
+    const appointmentData = {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.toLowerCase().trim(),
+      phone: phone.replace(/\D/g, ""),
+      isGuest: true,
+      status: "Pending",
+      // Include additional fields if required by server
+      // propertyType: formData.propertyType,
+      // budget: formData.budget,
+      // preferredDate: formData.preferredDate,
+      // preferredTime: formData.preferredTime,
+      // message: formData.message,
+    };
+
+    const response = await fetch(`${apiUrl}/api/appointments/user`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(appointmentData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to book appointment");
+    }
+
+    Alert.alert("Success!", "Your appointment has been booked successfully.", [
+      { text: "OK", onPress: onClose },
+    ]);
+
+    // Reset form
+    setFormData({
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      propertyType: "",
+      budget: "",
+      preferredDate: "",
+      preferredTime: "",
+      message: "",
+    });
+  } catch (error) {
+    console.error("Error booking appointment:", error);
+    Alert.alert("Error", error.message || "Failed to book appointment. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const DropdownField = ({ placeholder, value, options, onSelect }) => (
     <View style={styles.dropdownContainer}>
       <Text style={styles.dropdownPlaceholder}>{placeholder}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionsScroll}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.optionsScroll}
+      >
         {options.map((option, index) => (
           <TouchableOpacity
             key={index}
-            style={[styles.optionButton, value === option && styles.selectedOption]}
+            style={[
+              styles.optionButton,
+              value === option && styles.selectedOption,
+            ]}
             onPress={() => onSelect(option)}
           >
-            <Text style={[styles.optionText, value === option && styles.selectedOptionText]}>
+            <Text
+              style={[
+                styles.optionText,
+                value === option && styles.selectedOptionText,
+              ]}
+            >
               {option}
             </Text>
           </TouchableOpacity>
@@ -107,10 +177,15 @@ const AppointmentForm = ({ onClose }) => {
   );
 
   return (
-    <Modal visible={true} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal
+      visible={true}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
       <KeyboardAvoidingView
         style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <View style={styles.container}>
           <View style={styles.header}>
@@ -122,13 +197,15 @@ const AppointmentForm = ({ onClose }) => {
 
           <ScrollView style={styles.form} showsVerticalScrollIndicator={false}>
             <View style={styles.row}>
-              <View style={[styles.inputContainer, { flex: 1, marginRight: 10 }]}>
+              <View
+                style={[styles.inputContainer, { flex: 1, marginRight: 10 }]}
+              >
                 <Ionicons name="person-outline" size={20} color="#666" />
                 <TextInput
                   style={styles.input}
                   placeholder="First Name *"
                   value={formData.firstName}
-                  onChangeText={(value) => updateFormData('firstName', value)}
+                  onChangeText={(value) => updateFormData("firstName", value)}
                   autoCapitalize="words"
                 />
               </View>
@@ -139,7 +216,7 @@ const AppointmentForm = ({ onClose }) => {
                   style={styles.input}
                   placeholder="Last Name *"
                   value={formData.lastName}
-                  onChangeText={(value) => updateFormData('lastName', value)}
+                  onChangeText={(value) => updateFormData("lastName", value)}
                   autoCapitalize="words"
                 />
               </View>
@@ -151,7 +228,7 @@ const AppointmentForm = ({ onClose }) => {
                 style={styles.input}
                 placeholder="Email Address *"
                 value={formData.email}
-                onChangeText={(value) => updateFormData('email', value)}
+                onChangeText={(value) => updateFormData("email", value)}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
@@ -163,7 +240,7 @@ const AppointmentForm = ({ onClose }) => {
                 style={styles.input}
                 placeholder="Phone Number *"
                 value={formData.phone}
-                onChangeText={(value) => updateFormData('phone', value)}
+                onChangeText={(value) => updateFormData("phone", value)}
                 keyboardType="phone-pad"
                 maxLength={10}
               />
@@ -173,14 +250,14 @@ const AppointmentForm = ({ onClose }) => {
               placeholder="Property Type"
               value={formData.propertyType}
               options={propertyTypes}
-              onSelect={(value) => updateFormData('propertyType', value)}
+              onSelect={(value) => updateFormData("propertyType", value)}
             />
 
             <DropdownField
               placeholder="Budget Range"
               value={formData.budget}
               options={budgetRanges}
-              onSelect={(value) => updateFormData('budget', value)}
+              onSelect={(value) => updateFormData("budget", value)}
             />
 
             <View style={styles.inputContainer}>
@@ -189,7 +266,7 @@ const AppointmentForm = ({ onClose }) => {
                 style={styles.input}
                 placeholder="Preferred Date (DD/MM/YYYY)"
                 value={formData.preferredDate}
-                onChangeText={(value) => updateFormData('preferredDate', value)}
+                onChangeText={(value) => updateFormData("preferredDate", value)}
               />
             </View>
 
@@ -197,7 +274,7 @@ const AppointmentForm = ({ onClose }) => {
               placeholder="Preferred Time"
               value={formData.preferredTime}
               options={timeSlots}
-              onSelect={(value) => updateFormData('preferredTime', value)}
+              onSelect={(value) => updateFormData("preferredTime", value)}
             />
 
             <View style={styles.textAreaContainer}>
@@ -206,7 +283,7 @@ const AppointmentForm = ({ onClose }) => {
                 style={[styles.input, styles.textArea]}
                 placeholder="Additional Message (Optional)"
                 value={formData.message}
-                onChangeText={(value) => updateFormData('message', value)}
+                onChangeText={(value) => updateFormData("message", value)}
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
@@ -214,7 +291,10 @@ const AppointmentForm = ({ onClose }) => {
             </View>
 
             <TouchableOpacity
-              style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+              style={[
+                styles.submitButton,
+                loading && styles.submitButtonDisabled,
+              ]}
               onPress={handleSubmit}
               disabled={loading}
             >
@@ -224,14 +304,17 @@ const AppointmentForm = ({ onClose }) => {
                 ) : (
                   <>
                     <Ionicons name="calendar-outline" size={20} color="#fff" />
-                    <Text style={styles.submitButtonText}>Book Appointment</Text>
+                    <Text style={styles.submitButtonText}>
+                      Book Appointment
+                    </Text>
                   </>
                 )}
               </View>
             </TouchableOpacity>
 
             <Text style={styles.disclaimer}>
-              * Required fields. We'll contact you within 24 hours to confirm your appointment.
+              * Required fields. We'll contact you within 24 hours to confirm
+              your appointment.
             </Text>
           </ScrollView>
         </View>
@@ -243,29 +326,29 @@ const AppointmentForm = ({ onClose }) => {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   container: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 20,
-    width: '95%',
+    width: "95%",
     maxWidth: 450,
-    maxHeight: '90%',
+    maxHeight: "90%",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
   closeButton: {
     padding: 5,
@@ -274,18 +357,18 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   row: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 15,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 10,
     paddingHorizontal: 15,
     marginBottom: 15,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: "#f9f9f9",
   },
   input: {
     flex: 1,
@@ -294,15 +377,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   textAreaContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 10,
     paddingHorizontal: 15,
     paddingTop: 15,
     marginBottom: 15,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: "#f9f9f9",
   },
   textArea: {
     minHeight: 80,
@@ -313,61 +396,61 @@ const styles = StyleSheet.create({
   },
   dropdownPlaceholder: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 8,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   optionsScroll: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   optionButton: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderRadius: 20,
     marginRight: 10,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
   },
   selectedOption: {
-    backgroundColor: '#007bff',
-    borderColor: '#007bff',
+    backgroundColor: "#007bff",
+    borderColor: "#007bff",
   },
   optionText: {
     fontSize: 14,
-    color: '#333',
+    color: "#333",
   },
   selectedOptionText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: "#fff",
+    fontWeight: "600",
   },
   submitButton: {
-    backgroundColor: '#007bff',
+    backgroundColor: "#007bff",
     borderRadius: 10,
     paddingVertical: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 15,
     gap: 8,
   },
   submitButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: "#ccc",
   },
   loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   submitButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   disclaimer: {
     fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     lineHeight: 16,
     marginBottom: 10,
   },

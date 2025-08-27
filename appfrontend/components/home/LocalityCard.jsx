@@ -17,7 +17,7 @@ const LocalityCard = ({ name, rating, projects, imageUrl }) => {
         </View>
       </View>
 
-      <View style={styles.cardFooter}>
+      {/* <View style={styles.cardFooter}>
         <TouchableOpacity>
           <Text style={styles.link}>Insights</Text>
         </TouchableOpacity>
@@ -25,7 +25,7 @@ const LocalityCard = ({ name, rating, projects, imageUrl }) => {
         <TouchableOpacity>
           <Text style={styles.link}>Projects</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
     </View>
   );
 };

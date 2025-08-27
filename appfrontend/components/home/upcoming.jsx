@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,36 +6,58 @@ import {
   Image,
   ScrollView,
   Dimensions,
+  TouchableOpacity,
 } from 'react-native';
+import { useRouter } from "expo-router";
 
-const cards = [
+// Sample hardcoded properties array
+const hardcodedProperties = [
+  
   {
-    image: require('../../assets/images/ccu.png'),
-    title: 'Chakrborty grih',
-    location: 'sector 5 old Kolkata',
-    price: '1 Cr',
+    _id: '684a804703dfcd7be1fb7d1f',
+    title: 'Pride City',
+    location: 'Beverly Hills',
+    price: '$678,899',
+    images: ['https://picsum.photos/id/1011/200/200'],
   },
   {
-    image: require('../../assets/images/Delhi.png'),
-    title: 'Garg builder floor',
-    location: 'sector 8 Dwarka Delhi',
-    price: '1.9 Cr',
+    _id: '67ad78044cbb2d27de69802d',
+    title: 'Pali Hills',
+    location: 'New York',
+    price: '$1,200,000',
+    images: ['https://picsum.photos/id/1018/200/200'],
   },
   {
-    image: require('../../assets/images/Mumbai.png'),
-    title: 'Ashiyana Floor',
-    location: 'sector 2 South Mumbai',
-    price: '3 Cr',
+    _id: '66e021c6addfe5a4faf10dc7',
+    title: 'Beach House',
+    location: 'Malibu',
+    price: '$3,800,000',
+    images: ['https://picsum.photos/id/1025/200/200'],
   },
   {
-    image: require('../../assets/images/gurugram.png'),
-    title: 'Kailash Apartments',
-    location: 'sector 5 Gurugram',
-    price: '75 lakh',
+    _id: '66dfd0885b635f5a284f50a5',
+    title: 'Cozy Cottage',
+    location: 'Nashville',
+    price: '$850,000',
+    images: ['https://picsum.photos/id/1039/200/200'],
   },
+  // Add more if needed
 ];
 
+const { width } = Dimensions.get('window');
+
 const Upcoming = () => {
+    const router = useRouter();
+  
+  // Use only first 4 from hardcoded data
+  const [properties] = useState(hardcodedProperties.slice(0, 4));
+
+  // On card press navigate to PropertyDetails screen with id param
+  const handlePress = (id) => {
+   router.push(`(screens)/(property)/propertyDetails/${id}`);
+ 
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.wrapper}>
       <View style={styles.header}>
@@ -47,22 +69,32 @@ const Upcoming = () => {
       </View>
 
       <View style={styles.cardGrid}>
-        {cards.map((card, index) => (
-          <View key={index} style={styles.card}>
-            <Image source={card.image} style={styles.cardImage} />
+        {properties.map((property) => (
+          <TouchableOpacity
+            key={property._id}
+            style={styles.card}
+            onPress={() => handlePress(property._id)}
+          >
+            <Image
+              source={{
+                uri:
+                  property.images && property.images[0]
+                    ? property.images[0]
+                    : 'https://via.placeholder.com/120',
+              }}
+              style={styles.cardImage}
+            />
             <View style={styles.content}>
-              <Text style={styles.title}>{card.title}</Text>
-              <Text style={styles.location}>{card.location}</Text>
-              <Text style={styles.price}>{card.price}</Text>
+              <Text style={styles.title}>{property.title}</Text>
+              <Text style={styles.location}>{property.location}</Text>
+              <Text style={styles.price}>{property.price}</Text>
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
     </ScrollView>
   );
 };
-
-const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   wrapper: {

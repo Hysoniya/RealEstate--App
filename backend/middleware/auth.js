@@ -3,23 +3,25 @@ const User = require("../models/User");
 const Admin = require("../models/Admin");
 const Staff = require("../models/Staff");
 
-const SECRET = "bearer";
+const SECRET = process.env.JWT_SECRET;
 
 const authenticate = async (req, res, next) => {
   const token = req.header("Authorization")?.replace("Bearer ", "");
   console.log("TOKEN:", token);
 
   if (!token) {
+    console.log("No token provided");
     return res.status(401).send({ error: "Your authentication failed." });
   }
 
   try {
     const decoded = jwt.verify(token, SECRET);
+
     console.log("Decoded Token:", decoded);
 
     const user = await User.findById(decoded._id || decoded.id);
-    const admin = await Admin.findOne({ adminId: decoded.adminId });
-    const staff = await Staff.findOne({ staffId: decoded.staffId });
+    const admin = await Admin.findById(decoded._id || decoded.id);
+    const staff = await Staff.findById(decoded._id || decoded.id);
 
     if (user) {
       req.user = user;

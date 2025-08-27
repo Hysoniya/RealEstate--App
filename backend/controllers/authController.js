@@ -26,6 +26,7 @@ exports.signup = async (req, res) => {
         Model = Admin;
         userType = 'admin';
         userData.adminId = otherFields.adminId || `ADMIN${Date.now()}`;
+        userData.fullName = otherFields.name || '';
         break;
       case 'staff':
         Model = Staff;
@@ -53,6 +54,9 @@ exports.signup = async (req, res) => {
     console.log('Creating new user with data:', userData); // Log user data before saving
     const newUser = new Model(userData);
     await newUser.save();
+
+
+    console.log('New JWT secret:', process.env.JWT_SECRET); // Log the created user
 
     // Generate JWT
     const token = jwt.sign(

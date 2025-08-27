@@ -1,174 +1,217 @@
 import React from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
 
-const StaffVerifyProperties = ({
+const VerifyPropertiesForm = ({
   properties,
   loading,
   error,
   handleAcceptProperty,
+  handleRejectProperty,
 }) => {
-  const styles = {
-    containerStaff: {
-      padding: 16,
-    },
-    card: {
-      backgroundColor: "#fff",
-      padding: 16,
-      borderRadius: 10,
-      marginBottom: 16,
-      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-    },
-    titleRow: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 12,
-    },
-    title: {
-      fontSize: 20,
-      fontWeight: "bold",
-    },
-    status: {
-      fontWeight: "bold",
-      textTransform: "capitalize",
-    },
-    pending: {
-      color: "orange",
-    },
-    verified: {
-      color: "green",
-    },
-    rejected: {
-      color: "red",
-    },
-    infoGroup: {
-      marginTop: 10,
-    },
-    label: {
-      fontWeight: "600",
-      marginTop: 6,
-      display: "block",
-    },
-    value: {
-      marginBottom: 4,
-      color: "#444",
-      display: "block",
-    },
-    buttons: {
-      marginTop: 12,
-      display: "flex",
-      justifyContent: "flex-start",
-    },
-    acceptBtn: {
-      backgroundColor: "#4CAF50",
-      padding: "8px 20px",
-      borderRadius: 5,
-      border: "none",
-      color: "#fff",
-      fontWeight: "bold",
-      cursor: "pointer",
-    },
-    message: {
-      marginTop: 10,
-      fontSize: 16,
-    },
-    error: {
-      color: "red",
-      fontSize: 16,
-    },
-  };
+  const Info = ({ label, value }) => (
+    <View style={styles.infoRow}>
+      <Text style={styles.label}>{label}:</Text>
+      <Text style={styles.value}>{value}</Text>
+    </View>
+  );
 
   return (
-    <div style={styles.containerStaff}>
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={styles.container}
+    >
       {loading ? (
-        <p style={styles.message}>Loading properties...</p>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#007bff" />
+        </View>
       ) : error ? (
-        <p style={styles.error}>{error}</p>
+        <Text style={styles.error}>{error}</Text>
       ) : properties.length === 0 ? (
-        <p style={styles.message}>No properties pending verification.</p>
+        <Text style={styles.message}>No properties pending verification.</Text>
       ) : (
-        properties.map((property) => (
-          <div key={property._id} style={styles.card}>
-            <div style={styles.titleRow}>
-              <h2 style={styles.title}>{property.title}</h2>
-              <span
-                style={{
-                  ...styles.status,
-                  ...(property.verification === "pending"
+        [...properties].reverse().map((property) => (
+          <View key={property._id} style={styles.card}>
+            <View style={styles.titleRow}>
+              <Text style={styles.title}>{property.title}</Text>
+              <Text
+                style={[
+                  styles.status,
+                  property.verification === "pending"
                     ? styles.pending
                     : property.verification === "verified"
                     ? styles.verified
-                    : styles.rejected),
-                }}
+                    : styles.rejected,
+                ]}
               >
                 {property.verification}
-              </span>
-            </div>
+              </Text>
+            </View>
 
-            <div style={styles.infoGroup}>
-              <span style={styles.label}>Location:</span>
-              <span style={styles.value}>
-                {property.address}, {property.city}
-              </span>
-
-              <span style={styles.label}>BHK:</span>
-              <span style={styles.value}>{property.Bhk}</span>
-
-              <span style={styles.label}>Area:</span>
-              <span style={styles.value}>{property.area} sq.ft</span>
-
-              <span style={styles.label}>Type:</span>
-              <span style={styles.value}>{property.type}</span>
-
-              <span style={styles.label}>Purpose:</span>
-              <span style={styles.value}>{property.purpose}</span>
-
-              <span style={styles.label}>Price:</span>
-              <span style={styles.value}>₹{property.price}</span>
-
-              <span style={styles.label}>Description:</span>
-              <span style={styles.value}>{property.description}</span>
-
-              <span style={styles.label}>Amenities:</span>
-              <span style={styles.value}>
-                {property.amenities.join(", ")}
-              </span>
-
-              <span style={styles.label}>Balconies:</span>
-              <span style={styles.value}>{property.balconies}</span>
-
-              <span style={styles.label}>Bathrooms:</span>
-              <span style={styles.value}>{property.bathrooms}</span>
-
-              <span style={styles.label}>Floors:</span>
-              <span style={styles.value}>{property.floors}</span>
-
-              <span style={styles.label}>Owner:</span>
-              <span style={styles.value}>
-                {property.Propreiter_name} | {property.Propreiter_email} |{" "}
-                {property.Propreiter_contact}
-              </span>
-
-              <span style={styles.label}>Submitted:</span>
-              <span style={styles.value}>
-                {new Date(property.created_at).toLocaleString()}
-              </span>
-            </div>
+            <View style={styles.infoGroup}>
+              <Info label="Location" value={`${property.address}, ${property.city}`} />
+              <Info label="BHK" value={property.Bhk} />
+              <Info label="Area" value={`${property.area} sq.ft`} />
+              <Info label="Type" value={property.type} />
+              <Info label="Purpose" value={property.purpose} />
+              <Info label="Price" value={`₹${property.price}`} />
+              <Info label="Description" value={property.description} />
+              <Info label="Amenities" value={property.amenities.join(", ")} />
+              <Info label="Balconies" value={property.balconies.toString()} />
+              <Info label="Bathrooms" value={property.bathrooms.toString()} />
+              <Info label="Floors" value={property.floors} />
+              <Info
+                label="Owner"
+                value={`${property.Propreiter_name} | ${property.Propreiter_email} | ${property.Propreiter_contact}`}
+              />
+              <Info
+                label="Submitted"
+                value={new Date(property.created_at).toLocaleString()}
+              />
+            </View>
 
             {property.verification === "pending" && (
-              <div style={styles.buttons}>
-                <button
-                  style={styles.acceptBtn}
-                  onClick={() => handleAcceptProperty(property._id)}
+              <View style={styles.buttons}>
+                <TouchableOpacity
+                  style={[styles.button, styles.acceptBtn]}
+                  onPress={() => handleAcceptProperty(property._id)}
                 >
-                  Accept
-                </button>
-              </div>
+                  <Text style={styles.buttonText}>Accept</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.rejectBtn]}
+                  onPress={() => handleRejectProperty(property._id)}
+                >
+                  <Text style={styles.buttonText}>Reject</Text>
+                </TouchableOpacity>
+              </View>
             )}
-          </div>
+          </View>
         ))
       )}
-    </div>
+    </ScrollView>
   );
 };
 
-export default StaffVerifyProperties;
+const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+    alignItems: "center",
+  },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 550,
+    elevation: 4, // Android shadow
+    shadowColor: '#000', // iOS shadow
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    marginBottom: 20,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#2a2a2a',
+    flex: 1,
+    paddingRight: 10,
+  },
+  status: {
+    fontSize: 12,
+    fontWeight: '600',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    textTransform: 'uppercase',
+    color: 'white',
+  },
+  pending: {
+    backgroundColor: '#f0ad4e',
+  },
+  verified: {
+    backgroundColor: '#28a745',
+  },
+  rejected: {
+    backgroundColor: '#dc3545',
+  },
+  buttons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  button: {
+    flex: 1,
+    marginHorizontal: 5,
+    paddingVertical: 10,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  acceptBtn: {
+    backgroundColor: '#d4edda',
+    borderWidth: 1,
+    borderColor: '#c3e6cb',
+  },
+  rejectBtn: {
+    backgroundColor: '#f8d7da',
+    borderWidth: 1,
+    borderColor: '#f5c6cb',
+  },
+  buttonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  infoGroup: {
+    marginTop: 10,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  label: {
+    fontWeight: '600',
+    color: '#444',
+    width: 110,
+    textAlign: 'right',
+    marginRight: 10,
+  },
+  value: {
+    flex: 1,
+    color: '#222',
+  },
+  message: {
+    textAlign: 'center',
+    marginVertical: 40,
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#555',
+  },
+  error: {
+    color: 'red',
+    textAlign: 'center',
+    fontWeight: 'bold',
+    marginVertical: 20,
+  },
+});
+
+export default VerifyPropertiesForm;

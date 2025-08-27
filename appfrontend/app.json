@@ -1,31 +1,47 @@
-{
+ {
   "expo": {
-    "name": "appfrontend",
+   "name": "BasilAdobe",
     "slug": "appfrontend",
-    "version": "1.0.0",
+   "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "appfrontend",
+   "icon": "./assets/images/applogo.jpg",
+   "scheme": "appfrontend",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+         "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to take photos.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to select photos.",
+        "NSPhotoLibraryAddUsageDescription": "This app needs permission to save photos to your library."
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive_icon.png",
+        "foregroundImage": "./assets/images/applogo.jpg",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.yashag24.appfrontend"
-    },
+      "package": "com.yashag24.appfrontend",
+"permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VIDEO",
+        "READ_MEDIA_VISUAL_USER_SELECTED"
+      ]
+     },
     "web": {
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": [
+   "plugins": [
       "expo-router",
+      [
+        "expo-image-picker"
+      ],
       [
         "expo-splash-screen",
         {
@@ -47,3 +63,5 @@
     }
   }
 }
+
+

@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { jwtDecode } from "jwt-decode";
-import LottieView from "lottie-react-native";
 import Navbar from "@/components/home/Navbar";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -47,7 +46,6 @@ const UserPastSearches = () => {
         const token = await AsyncStorage.getItem("authToken");
         if (token) {
           const decoded = jwtDecode(token);
-          // console.log(decoded);
           const res = await fetch(
             `${API_URL}/api/user-update/${decoded._id}/past-searches`
           );
@@ -110,19 +108,14 @@ const UserPastSearches = () => {
                     </View>
                   );
                 }}
-                contentContainerStyle={{}}
-                style={{}}
               />
             </View>
           ) : (
             <View style={styles.emptyState}>
-              <LottieView
-                source={{
-                  uri: "https://lottie.host/a5254c19-e1f1-409d-95bd-c175ec072f09/lfnd0ChTqd.json",
-                }}
-                autoPlay
-                loop
-                style={{ width: 200, height: 200 }}
+              <MaterialCommunityIcons
+                name="magnify-close"
+                size={80}
+                color="#ccc"
               />
               <Text style={styles.noSearchMessage}>
                 You haven’t searched anything yet. Start exploring properties

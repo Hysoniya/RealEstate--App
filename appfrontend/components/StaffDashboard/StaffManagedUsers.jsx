@@ -17,6 +17,8 @@ const StaffManagedUsers = ({ userDetails }) => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  console.log("User Details:", userDetails);
+
   useEffect(() => {
     if (userDetails) {
       let result = userDetails;

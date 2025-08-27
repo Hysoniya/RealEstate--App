@@ -11,76 +11,106 @@ router.post(
   upload.fields([{ name: "propertyImage", maxCount: 8 }]),
   async (req, res) => {
     try {
-      console.log(req.body, "propertyRoute post property");
-
+      console.log("Received body:", req.body);
+      
+      // Initialize image_urls as empty array
       let image_urls = [];
 
-      if (req.files && Array.isArray(req.files.propertyImage)) {
-        for (let i = 0; i < req.files.propertyImage.length; i++) {
-          const propertyImageLocalPath = req.files.propertyImage[i].path;
-          const uploadResult = await uploadOnCloudinary(propertyImageLocalPath);
-          if (uploadResult) {
-            image_urls.push(uploadResult.url);
-          } else {
-            return res.status(500).json({ error: "Failed to upload image" });
+      // Handle file uploads
+      if (req.files?.propertyImage) {
+        for (const file of req.files.propertyImage) {
+          try {
+            const uploadResult = await uploadOnCloudinary(file.path);
+            if (uploadResult?.url) {
+              image_urls.push(uploadResult.url);
+            }
+          } catch (uploadError) {
+            console.error("Image upload failed:", uploadError);
+            // Continue with other images even if one fails
           }
         }
       }
 
-      const other_rooms = JSON.parse(req.body.other_rooms || "{}");
-
-      let amenities = [];
+      // Parse other_rooms safely
+      let other_rooms = {
+        studyRoom: false,
+        poojaRoom: false,
+        servantRoom: false,
+        storeRoom: false
+      };
+      
       try {
-        amenities = JSON.parse(req.body.amenities);
-      } catch (err) {
-        if (typeof req.body.amenities === "string") {
-          amenities = req.body.amenities.split(",").map((a) => a.trim());
+        if (req.body.other_rooms) {
+          const parsedRooms = JSON.parse(req.body.other_rooms);
+          other_rooms = {
+            studyRoom: !!parsedRooms.studyRoom,
+            poojaRoom: !!parsedRooms.poojaRoom,
+            servantRoom: !!parsedRooms.servantRoom, // Fixed typo from servantRoom
+            storeRoom: !!parsedRooms.storeRoom
+          };
+        }
+      } catch (parseError) {
+        console.error("Error parsing other_rooms:", parseError);
+      }
+
+      // Parse amenities safely
+      let amenities = [];
+      if (req.body.amenities) {
+        try {
+          amenities = Array.isArray(req.body.amenities) 
+            ? req.body.amenities 
+            : JSON.parse(req.body.amenities);
+        } catch {
+          amenities = typeof req.body.amenities === 'string' 
+            ? req.body.amenities.split(',').map(a => a.trim()) 
+            : [];
         }
       }
 
+      // Create new property
       const newProperty = new Property({
-        title: req.body.title,
-        description: req.body.description,
-        address: req.body.address,
-        city: req.body.city,
-        price: req.body.price,
-        area: req.body.areaDetails || req.body.area,
-        type: req.body.propertyType,
-        purpose: req.body.purpose,
-        status: req.body.status,
+        title: req.body.title || "",
+        description: req.body.description || "",
+        address: req.body.address || "",
+        city: req.body.city || "",
+        price: parseFloat(req.body.price) || 0,
+        area: req.body.areaDetails || req.body.area || "",
+        type: req.body.propertyType || "Residential",
+        purpose: req.body.purpose || "sell",
+        status: req.body.status || "Available",
         amenities,
-        landmark: req.body.landmark,
-        Bhk: req.body.numberOfBedrooms,
-        bathrooms: req.body.numberOfBathrooms,
-        balconies: req.body.numberOfBalconies,
-        floors: req.body.totalFloorDetails,
+        landmark: req.body.landmark || "",
+        Bhk: req.body.numberOfBedrooms || req.body.bhk || "",
+        bathrooms: req.body.numberOfBathrooms || req.body.bathrooms || "",
+        balconies: req.body.numberOfBalconies || req.body.balconies || "",
+        floors: req.body.totalFloorDetails || req.body.floors || "",
 
-        postedBy: req.body.posterType || req.body.postedBy,
-        availabilityStatus: req.body.availability,
-        Propreiter_name: req.body.proprietorName,
-        Propreiter_email: req.body.proprietorEmail,
-        Propreiter_contact:
-          req.body.proprietorPhone || req.body.proprietorContact,
-        phone: req.body.phone,
-        mail: req.body.mail,
+        postedBy: req.body.posterType || req.body.postedBy || "Owner",
+        availabilityStatus: req.body.availability || "Immediate",
+        Propreiter_name: req.body.proprietorName || "",
+        Propreiter_email: req.body.proprietorEmail || "",
+        Propreiter_contact: req.body.proprietorPhone || req.body.proprietorContact || "",
+        phone: req.body.phone || "",
+        mail: req.body.mail || "",
         allInclusivePrice: req.body.allInclusivePrice === "true",
-        taxAndGovtChargesExcluded:
-          req.body.taxAndGovtChargesExcluded === "true",
+        taxAndGovtChargesExcluded: req.body.taxAndGovtChargesExcluded === "true",
         priceNegotiable: req.body.priceNegotiable === "true",
-        other_rooms: {
-          studyRoom: !!other_rooms.studyRoom,
-          poojaRoom: !!other_rooms.poojaRoom,
-          servantRoom: !!other_rooms.servantRoom,
-          storeRoom: !!other_rooms.storeRoom,
-        },
+        other_rooms,
         images: image_urls,
       });
 
       await newProperty.save();
-      res.status(201).json(newProperty);
+      res.status(201).json({
+        success: true,
+        property: newProperty
+      });
+      
     } catch (error) {
-      console.error("Upload failed:", error);
-      res.status(500).json({ error: "Internal Server Error" });
+      console.error("Property creation failed:", error);
+      res.status(500).json({ 
+        success: false,
+        error: error.message || "Internal Server Error" 
+      });
     }
   }
 );

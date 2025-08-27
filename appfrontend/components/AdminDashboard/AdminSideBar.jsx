@@ -77,7 +77,7 @@ const AdminSideBar = ({
           </TouchableOpacity>
         ))}
  
-        {/* Add Admin Button */}
+        {/* Add Admin Button
         <TouchableOpacity
           onPress={() => {
             handleShowModal();
@@ -87,7 +87,7 @@ const AdminSideBar = ({
         >
           <Ionicons name="add-circle" size={20} color="#ffffff" />
           <Text style={styles.addAdminText}>Add Admin</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </ScrollView>
  
       {/* Logout Button */}

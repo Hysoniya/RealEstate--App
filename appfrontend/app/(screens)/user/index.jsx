@@ -36,6 +36,7 @@ import { checkAuth } from "@/redux/Auth/AuthSlice";
 import { useDispatch, useSelector } from 'react-redux';
 import { Alert } from "react-native";
 import { initializeAuth, performLogout } from '@/redux/Auth/AuthSlice'; // Adjust the import path
+import BuilderList from "@/components/home/BuilderList";
 
 
 const { width, height } = Dimensions.get('window');
@@ -314,8 +315,8 @@ const HomePage = () => {
         </View>
 
         <BankingPartnersSection />
-
-        <View style={styles.popularBuilders}>
+            <BuilderList/>
+        {/* <View style={styles.popularBuilders}>
           <Text style={styles.heading}>POPULAR BUILDERS</Text>
           <View style={styles.builderListings}>
             {properties.slice(0, 1).map((builder) => (
@@ -329,11 +330,11 @@ const HomePage = () => {
               </View>
             ))}
           </View>
-        </View>
+        </View> */}
 
         <Upcoming />
-        <CityWiseReviews />
-        <EmergingLocalities />
+        {/* <CityWiseReviews /> */}
+        {/* <EmergingLocalities /> */}
 
         <View style={styles.insightsContainer}>
           <CardLayout />
@@ -361,9 +362,9 @@ const HomePage = () => {
           </View>
         </View>
 
-        <StaffPerformanceCategories />
+        {/* <StaffPerformanceCategories /> */}
         <Articles />
-        <Footer />
+        {/* <Footer /> */}
       </ScrollView>
 
       {/* {isLoginPopupVisible && (

@@ -5,19 +5,14 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
-  Modal,
   StyleSheet,
-  Platform,
+  ScrollView,
 } from "react-native";
+import Modal from "react-native-modal";
 import { Picker } from "@react-native-picker/picker";
-import Icon from "react-native-vector-icons/FontAwesome";
+import { Feather } from "@expo/vector-icons";
 
-const AdminAppointment = ({
-  appointments,
-  loading,
-  error,
-  handleRemoveAppointment,
-}) => {
+const AdminAppointment = ({ appointments, loading, error, handleRemoveAppointment }) => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [showStaffModal, setShowStaffModal] = useState(false);
@@ -52,214 +47,403 @@ const AdminAppointment = ({
     setShowUpdateModal(true);
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.row}>
-      <Text style={styles.cell}>{`${item.firstName || ""} ${item.lastName || ""}`}</Text>
+  const renderAppointment = ({ item }) => (
+    <View style={styles.appointmentRow}>
+      <Text style={styles.cell}>
+        {`${item.firstName || ""} ${item.lastName || ""}`.trim() || "N/A"}
+      </Text>
       <Text style={styles.cell}>{item.email || "N/A"}</Text>
       <Text style={styles.cell}>{item.phoneNumber || "N/A"}</Text>
-      <Text style={styles.cell}>{item.status}</Text>
+      <Text style={[styles.cell, styles.status]}>{item.status}</Text>
       <TouchableOpacity
+        style={styles.linkBtn}
         onPress={() => openStaffModal(item.staffId)}
         disabled={!item.staffId}
       >
-        <Text style={[styles.cell, styles.link]}>
-          {item.staffId?.staffId || "N/A"}
-        </Text>
+        <Text style={styles.linkText}>{item.staffId?.staffId || "N/A"}</Text>
       </TouchableOpacity>
-      <Text style={styles.cell}>
-        {new Date(item.updatedAt).toLocaleString()}
-        {"\n"}
-        {new Date(item.createdAt).toLocaleString()}
-      </Text>
+      <View style={styles.cell}>
+        <Text>{new Date(item.updatedAt).toLocaleString()}</Text>
+        <View style={styles.divider} />
+        <Text>{new Date(item.createdAt).toLocaleString()}</Text>
+      </View>
       <Text style={styles.cell}>{item.isGuest ? "Guest" : "User"}</Text>
-      <View style={[styles.cell, { flexDirection: "row", gap: 12 }]}>
-        <TouchableOpacity onPress={() => openUpdateModal(item.appointmentUpdates)}>
-          <Icon name="info-circle" size={20} color="#007bff" />
+      <View style={styles.actionCell}>
+        <TouchableOpacity
+          style={styles.detailsBtn}
+          onPress={() => openUpdateModal(item.appointmentUpdates)}
+        >
+          <Feather name="eye" size={20} color="black" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleRemoveAppointment(item._id)}>
-          <Icon name="trash" size={20} color="#e74c3c" />
+        <TouchableOpacity
+          style={styles.deleteBtn}
+          onPress={() => handleRemoveAppointment(item._id)}
+        >
+          <Feather name="trash-2" size={20} color="#e74c3c" />
         </TouchableOpacity>
       </View>
     </View>
   );
 
+  const renderUpdate = ({ item, index }) => (
+    <View style={styles.updateRow}>
+      <Text style={styles.updateCell}>{index + 1}</Text>
+      <Text style={styles.updateCell}>{item.status}</Text>
+      <Text style={styles.updateCell}>{item.appointmentType}</Text>
+      <Text style={styles.updateCell}>{item.note}</Text>
+      <Text style={styles.updateCell}>{item.staffId}</Text>
+      <Text style={styles.updateCell}>
+        {new Date(item.followUpDate).toLocaleDateString()}
+      </Text>
+      <Text style={styles.updateCell}>{new Date(item.updatedAt).toLocaleString()}</Text>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Appointments</Text>
-
-      <View style={styles.controls}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search..."
-          value={searchTerm}
-          onChangeText={setSearchTerm}
-        />
-        <View style={styles.pickerWrapper}>
-          <Picker
-            selectedValue={selectedStatus}
-            onValueChange={(val) => setSelectedStatus(val)}
-            style={styles.picker}
-          >
-            {["all", "Pending", "Accepted", "Scheduled", "In Progress", "Completed", "Cancelled"]
-              .map((status) => (
-                <Picker.Item label={status} value={status} key={status} />
-              ))}
-          </Picker>
-        </View>
-      </View>
-
       {loading ? (
-        <Text style={styles.statusText}>Loading appointments...</Text>
+        <Text style={styles.loading}>Loading appointments...</Text>
       ) : error ? (
-        <Text style={[styles.statusText, { color: "red" }]}>{error}</Text>
-      ) : filteredAppointments.length === 0 ? (
-        <Text style={styles.statusText}>No appointments found.</Text>
+        <Text style={styles.error}>{error}</Text>
       ) : (
-        <>
+        <ScrollView style={styles.tableWrapper}>
           <View style={styles.headerRow}>
-            {["Name", "Email", "Phone", "Status", "Staff", "Timestamps", "Type", "Actions"].map(
-              (h, i) => (
-                <Text style={[styles.cell, styles.headerCell]} key={i}>{h}</Text>
-              )
-            )}
+            <Text style={styles.headApp}>Appointments</Text>
+            <View style={styles.searchFilterContainer}>
+              <TextInput
+                style={styles.searchInput}
+                value={searchTerm}
+                onChangeText={setSearchTerm}
+                placeholder="Search here..."
+              />
+              <Picker
+                selectedValue={selectedStatus}
+                onValueChange={setSelectedStatus}
+                style={styles.dropdown}
+              >
+                <Picker.Item label="All" value="all" />
+                <Picker.Item label="Pending" value="Pending" />
+                <Picker.Item label="Accepted" value="Accepted" />
+                <Picker.Item label="Scheduled" value="Scheduled" />
+                <Picker.Item label="In Progress" value="In Progress" />
+                <Picker.Item label="Completed" value="Completed" />
+                <Picker.Item label="Cancelled" value="Cancelled" />
+              </Picker>
+            </View>
           </View>
-          <FlatList
-            data={filteredAppointments}
-            renderItem={renderItem}
-            keyExtractor={(item) => item._id}
-          />
-        </>
+
+          {filteredAppointments.length > 0 ? (
+            <View>
+              <View style={styles.tableHeader}>
+                <Text style={styles.headerCell}>Full Name</Text>
+                <Text style={styles.headerCell}>Email</Text>
+                <Text style={styles.headerCell}>Phone</Text>
+                <Text style={styles.headerCell}>Status</Text>
+                <Text style={styles.headerCell}>Managed By</Text>
+                <Text style={styles.headerCell}>Updated / Created</Text>
+                <Text style={styles.headerCell}>Type</Text>
+                <Text style={styles.headerCell}>Action</Text>
+              </View>
+              <FlatList
+                data={filteredAppointments}
+                renderItem={renderAppointment}
+                keyExtractor={(item) => item._id}
+                scrollEnabled={false}
+              />
+            </View>
+          ) : (
+            <Text style={styles.noAppointments}>
+              No appointments found for selected status.
+            </Text>
+          )}
+        </ScrollView>
       )}
 
       {/* Staff Modal */}
-      <Modal visible={showStaffModal} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modal}>
-            {selectedStaff ? (
-              <>
-                <Text style={styles.modalTitle}>Staff Details</Text>
-                <Text>ID: {selectedStaff.staffId}</Text>
-                <Text>Name: {selectedStaff.fullName}</Text>
-                <Text>Email: {selectedStaff.email}</Text>
-                <Text>Phone: {selectedStaff.phoneNumber}</Text>
-                <Text>Role: {selectedStaff.role}</Text>
-              </>
-            ) : (
-              <Text>No staff data available.</Text>
-            )}
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowStaffModal(false)}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
+      <Modal
+        isVisible={showStaffModal}
+        onBackdropPress={() => setShowStaffModal(false)}
+        style={styles.modal}
+      >
+        <View style={styles.modalContent}>
+          {selectedStaff ? (
+            <>
+              <Text style={styles.modalTitle}>Staff Details</Text>
+              <Text style={styles.modalText}>
+                <Text style={styles.modalLabel}>ID: </Text>
+                {selectedStaff.staffId}
+              </Text>
+              <Text style={styles.modalText}>
+                <Text style={styles.modalLabel}>Name: </Text>
+                {selectedStaff.fullName}
+              </Text>
+              <Text style={styles.modalText}>
+                <Text style={styles.modalLabel}>Email: </Text>
+                {selectedStaff.email}
+              </Text>
+              <Text style={styles.modalText}>
+                <Text style={styles.modalLabel}>Phone: </Text>
+                {selectedStaff.phoneNumber}
+              </Text>
+              <Text style={styles.modalText}>
+                <Text style={styles.modalLabel}>Role: </Text>
+                {selectedStaff.role}
+              </Text>
+            </>
+          ) : (
+            <Text style={styles.modalText}>No staff data available.</Text>
+          )}
+          <TouchableOpacity
+            style={styles.closeBtn}
+            onPress={() => setShowStaffModal(false)}
+          >
+            <Text style={styles.closeBtnText}>Close</Text>
+          </TouchableOpacity>
         </View>
       </Modal>
 
-      {/* Update Modal */}
-      <Modal visible={showUpdateModal} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modal, { maxHeight: "80%" }]}>
+      {/* Appointment Updates Modal */}
+      <Modal
+        isVisible={showUpdateModal}
+        onBackdropPress={() => setShowUpdateModal(false)}
+        style={styles.largeModal}
+      >
+        <View style={styles.largeModalContent}>
+          <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Appointment Updates</Text>
-            {selectedUpdates.length > 0 ? (
-              selectedUpdates.reverse().map((log, index) => (
-                <View key={index} style={styles.updateItem}>
-                  <Text>{`#${index + 1} - ${log.status}`}</Text>
-                  <Text>{`Type: ${log.appointmentType}`}</Text>
-                  <Text>{`Note: ${log.note}`}</Text>
-                  <Text>{`Staff ID: ${log.staffId}`}</Text>
-                  <Text>{`Follow-up: ${new Date(log.followUpDate).toLocaleDateString()}`}</Text>
-                  <Text>{`Updated At: ${new Date(log.updatedAt).toLocaleString()}`}</Text>
-                </View>
-              ))
-            ) : (
-              <Text>No updates found.</Text>
-            )}
             <TouchableOpacity
-              style={styles.closeButton}
+              style={styles.closeBtn}
               onPress={() => setShowUpdateModal(false)}
             >
-              <Text style={styles.closeButtonText}>Close</Text>
+              <Text style={styles.closeBtnText}>X</Text>
             </TouchableOpacity>
           </View>
+          {selectedUpdates.length > 0 ? (
+            <ScrollView style={styles.tableContainer}>
+              <View style={styles.updateTableHeader}>
+                <Text style={styles.updateHeaderCell}>#</Text>
+                <Text style={styles.updateHeaderCell}>Status</Text>
+                <Text style={styles.updateHeaderCell}>Type</Text>
+                <Text style={styles.updateHeaderCell}>Note</Text>
+                <Text style={styles.updateHeaderCell}>Staff ID</Text>
+                <Text style={styles.updateHeaderCell}>Follow-up Date</Text>
+                <Text style={styles.updateHeaderCell}>Updated At</Text>
+              </View>
+              <FlatList
+                data={selectedUpdates.reverse()}
+                renderItem={renderUpdate}
+                keyExtractor={(_, index) => index.toString()}
+                scrollEnabled={false}
+              />
+            </ScrollView>
+          ) : (
+            <Text style={styles.noUpdates}>No updates found.</Text>
+          )}
         </View>
       </Modal>
     </View>
   );
 };
 
-export default AdminAppointment;
-
 const styles = StyleSheet.create({
-  container: { padding: 16 },
-  heading: { fontSize: 20, fontWeight: "bold", marginBottom: 12 },
-  controls: {
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#ffffff",
+  },
+  loading: {
+    fontSize: 16,
+    textAlign: "center",
+    marginTop: 20,
+    color: "#555",
+  },
+  error: {
+    fontSize: 16,
+    textAlign: "center",
+    marginTop: 20,
+    color: "red",
+    fontWeight: "500",
+  },
+  noAppointments: {
+    fontSize: 16,
+    textAlign: "center",
+    marginTop: 20,
+    color: "#555",
+  },
+  tableWrapper: {
+    flex: 1,
+  },
+  headApp: {
+    fontSize: 22,
+    fontWeight: "700",
+    marginBottom: 20,
+  },
+  headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 16,
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  searchFilterContainer: {
+    flexDirection: "row",
+    width: "50%",
     gap: 10,
   },
   searchInput: {
     flex: 1,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderColor: "#ccc",
-    borderRadius: 6,
-  },
-  pickerWrapper: {
-    width: 160,
+    padding: 8,
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 6,
-    overflow: "hidden",
+    borderRadius: 5,
+    fontSize: 14,
   },
-  picker: { height: 40 },
-  headerRow: {
+  dropdown: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+  },
+  tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#f0f0f0",
-    paddingVertical: 8,
+    backgroundColor: "#f4f4f4",
+    paddingVertical: 10,
   },
-  row: {
+  headerCell: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+    textTransform: "uppercase",
+  },
+  appointmentRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    paddingVertical: 8,
+    borderColor: "#e0e0e0",
+    paddingVertical: 10,
+    backgroundColor: "#fff",
   },
   cell: {
     flex: 1,
-    fontSize: 12,
-    paddingHorizontal: 4,
+    fontSize: 14,
+    textAlign: "center",
+    paddingHorizontal: 5,
   },
-  headerCell: { fontWeight: "bold" },
-  link: { color: "#007bff", textDecorationLine: "underline" },
-  statusText: { textAlign: "center", marginTop: 20, fontSize: 16 },
-  modalOverlay: {
+  status: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  linkBtn: {
     flex: 1,
-    justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-    padding: 20,
+  },
+  linkText: {
+    color: "#007bff",
+    fontSize: 14,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#e0e0e0",
+    marginVertical: 5,
+  },
+  actionCell: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 10,
+  },
+  detailsBtn: {
+    padding: 5,
+  },
+  deleteBtn: {
+    padding: 5,
   },
   modal: {
-    backgroundColor: "white",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
     padding: 20,
     borderRadius: 10,
-    width: "100%",
+    width: "80%",
   },
-  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 10 },
-  closeButton: {
-    marginTop: 20,
-    backgroundColor: "#dc3545",
-    padding: 10,
-    borderRadius: 6,
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 15,
   },
-  closeButtonText: { color: "white", textAlign: "center" },
-  updateItem: {
+  modalText: {
+    fontSize: 16,
     marginBottom: 10,
+  },
+  modalLabel: {
+    fontWeight: "600",
+  },
+  closeBtn: {
+    backgroundColor: "#dc3545",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  closeBtnText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  largeModal: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  largeModalContent: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    width: "90%",
+    maxHeight: "80%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  tableContainer: {
+    flex: 1,
+  },
+  updateTableHeader: {
+    flexDirection: "row",
+    backgroundColor: "#f2f2f2",
+    paddingVertical: 10,
+  },
+  updateHeaderCell: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  updateRow: {
+    flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
-    paddingBottom: 8,
+    borderColor: "#ddd",
+    paddingVertical: 10,
+  },
+  updateCell: {
+    flex: 1,
+    fontSize: 14,
+    textAlign: "center",
+    paddingHorizontal: 5,
+  },
+  noUpdates: {
+    fontSize: 16,
+    textAlign: "center",
+    marginTop: 20,
+    color: "#555",
   },
 });
+
+export default AdminAppointment;

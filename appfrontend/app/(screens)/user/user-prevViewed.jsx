@@ -7,13 +7,10 @@ import {
   Image,
   Modal,
   StyleSheet,
-  Button,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { jwtDecode } from "jwt-decode";
 import { useRouter } from "expo-router";
-import LottieView from "lottie-react-native";
-import Navbar from "@/components/home/Navbar";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -36,29 +33,10 @@ const Navbar_local = () => {
   );
 };
 
-
 const UserPreviouslyViewed = () => {
   const [properties, setProperties] = useState([]);
   const [selectedProperty, setSelectedProperty] = useState(null);
-  const [loadingLottie, setLoadingLottie] = useState(true);
-  const [lottieSource, setLottieSource] = useState(null);
   const router = useRouter();
-
-  useEffect(() => {
-    const fetchLottie = async () => {
-      try {
-        const res = await fetch(
-          "https://lottie.host/fc9fb0d0-1766-4e25-8483-ba9f9fa545f6/rNwcjg5a6Q.json"
-        );
-        setLottieSource(await res.json());
-      } catch {
-        setLottieSource(null);
-      } finally {
-        setLoadingLottie(false);
-      }
-    };
-    fetchLottie();
-  }, []);
 
   useEffect(() => {
     const fetchPreviouslyViewed = async () => {
@@ -68,24 +46,27 @@ const UserPreviouslyViewed = () => {
         const decoded = jwtDecode(token);
         const userId = decoded?._id;
         if (!userId) throw new Error("User ID not found in token");
+
         const res = await fetch(`${API_URL}/api/user-update/previous-view`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId }),
         });
+
         if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         const data = await res.json();
-        // normalization: unwrap if item.propertyId
+
         const arr =
           data.previousView?.map((item) =>
             item.propertyId ? item.propertyId : item
           ) || [];
+
         setProperties(arr);
       } catch (error) {
-        // Optionally: set error state
         setProperties([]);
       }
     };
+
     fetchPreviouslyViewed();
   }, []);
 
@@ -94,23 +75,16 @@ const UserPreviouslyViewed = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#f4f4fa" }}>
-      {/* <Navbar /> */}
       <Navbar_local />
       <View style={styles.container}>
         <Text style={styles.header}>Previously Viewed</Text>
         <View style={styles.contentArea}>
           {properties.length === 0 ? (
             <View style={styles.emptySection}>
-              {lottieSource ? (
-                <LottieView
-                  source={lottieSource}
-                  autoPlay
-                  loop
-                  style={{ width: 200, height: 200 }}
-                />
-              ) : loadingLottie ? (
-                <Text>Loading...</Text>
-              ) : null}
+              <Image
+                source={{ uri: "https://via.placeholder.com/200x200?text=No+Views" }}
+                style={{ width: 200, height: 200 }}
+              />
               <Text style={styles.emptyMessage}>
                 You haven’t viewed anything yet
               </Text>
@@ -130,15 +104,6 @@ const UserPreviouslyViewed = () => {
                   onPress={() => openPropertyDetails(item)}
                 >
                   <View style={styles.cardImageWrapper}>
-                    {/* <Image
-                    source={
-                      item.images && item.images[0]
-                        ? { uri: item.images[0] }
-                        : require("../assets/placeholder.png") // Place a placeholder image in your assets
-                    }
-                    style={styles.cardImage}
-                  /> */}
-
                     <Image
                       source={{
                         uri: "https://via.placeholder.com/100x100?text=No+Image",
@@ -233,7 +198,9 @@ const UserPreviouslyViewed = () => {
 
 export default UserPreviouslyViewed;
 
+// styles (unchanged, reused from your original code)
 const styles = StyleSheet.create({
+  // ... same styles as before
   container: {
     flex: 1,
     backgroundColor: "#f6f5fa",
@@ -319,7 +286,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 16,
   },
-  //---------------------------------
   propertyPopupOverlay: {
     flex: 1,
     backgroundColor: "rgba(36,36,36,0.35)",

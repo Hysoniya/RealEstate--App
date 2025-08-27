@@ -1,18 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  Pressable,
   Modal,
   TextInput,
   ActivityIndicator,
   FlatList,
-  Alert
-} from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import { useNavigation } from '@react-navigation/native';
+  Alert,
+  TouchableOpacity,
+} from "react-native";
+import { Picker } from "@react-native-picker/picker";
+import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
+
+const router = useRouter();
+
 
 const StaffManagedAppointments = ({
   appointments = [],
@@ -73,14 +77,15 @@ const StaffManagedAppointments = ({
       </Text>
       <Text style={styles.cell}>
         {item.staffId ? (
-          <Pressable
+          <TouchableOpacity
+            activeOpacity={0.7}
             onPress={() => {
               setSelectedStaff(item.staffId);
               setIsStaffModalOpen(true);
             }}
           >
             <Text style={styles.linkText}>{item.staffId.staffId || "N/A"}</Text>
-          </Pressable>
+          </TouchableOpacity>
         ) : (
           "—"
         )}
@@ -95,39 +100,48 @@ const StaffManagedAppointments = ({
         {item.isGuest ? (
           "Guest"
         ) : (
-          <Pressable onPress={() => handleUserClick(item.userId)}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => handleUserClick(item.userId)}
+          >
             <Text style={styles.linkText}>User</Text>
-          </Pressable>
+          </TouchableOpacity>
         )}
       </Text>
       <View style={styles.cell}>
         {item.status.toLowerCase() === "pending" ? (
           <View style={styles.actionButtons}>
-            <Pressable
+            <TouchableOpacity
               style={[styles.button, styles.acceptButton]}
+              activeOpacity={0.7}
               onPress={() => handleAcceptAppointment(item._id)}
             >
               <Text style={styles.buttonText}>Accept</Text>
-            </Pressable>
-            <Pressable
+            </TouchableOpacity>
+            <TouchableOpacity
               style={[styles.button, styles.rejectButton]}
+              activeOpacity={0.7}
               onPress={() => handleCancelAppointment(item._id)}
             >
               <Text style={styles.buttonText}>Reject</Text>
-            </Pressable>
+            </TouchableOpacity>
           </View>
         ) : item.status.toLowerCase() !== "cancelled" ? (
-          <Pressable
+          <TouchableOpacity
             style={[styles.button, styles.logsButton]}
+            activeOpacity={0.7}
             onPress={() =>
-              navigation.navigate('AppointmentLogs', {
-                appointmentId: item._id,
-                staffId: staffId
+              router.replace({
+                pathname: "staff/appointment-details",
+                params: {
+                  appointmentId: item._id,
+                  staffId: staffId,
+                },
               })
             }
           >
             <Text style={styles.buttonText}>Logs</Text>
-          </Pressable>
+          </TouchableOpacity>
         ) : (
           <Text>-</Text>
         )}
@@ -198,7 +212,7 @@ const StaffManagedAppointments = ({
             <FlatList
               data={filteredAppointments}
               renderItem={renderAppointmentItem}
-              keyExtractor={item => item._id}
+              keyExtractor={(item) => item._id}
             />
           </View>
         </ScrollView>
@@ -210,29 +224,39 @@ const StaffManagedAppointments = ({
       <Modal visible={isModalOpen} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Pressable style={styles.closeButton} onPress={closeModal}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              activeOpacity={0.7}
+              onPress={closeModal}
+            >
               <Text style={styles.closeButtonText}>×</Text>
-            </Pressable>
+            </TouchableOpacity>
             <Text style={styles.modalTitle}>User Details</Text>
             {selectedUser && (
               <>
                 <Text style={styles.modalText}>
-                  <Text style={styles.boldText}>Name:</Text> {selectedUser.firstName} {selectedUser.lastName}
+                  <Text style={styles.boldText}>Name:</Text>{" "}
+                  {selectedUser.firstName} {selectedUser.lastName}
                 </Text>
                 <Text style={styles.modalText}>
-                  <Text style={styles.boldText}>Email:</Text> {selectedUser.email}
+                  <Text style={styles.boldText}>Email:</Text>{" "}
+                  {selectedUser.email}
                 </Text>
                 <Text style={styles.modalText}>
-                  <Text style={styles.boldText}>Phone:</Text> {selectedUser.phoneNumber}
+                  <Text style={styles.boldText}>Phone:</Text>{" "}
+                  {selectedUser.phoneNumber}
                 </Text>
                 <Text style={styles.modalText}>
-                  <Text style={styles.boldText}>Landline:</Text> {selectedUser.landlineNumber || 'N/A'}
+                  <Text style={styles.boldText}>Landline:</Text>{" "}
+                  {selectedUser.landlineNumber || "N/A"}
                 </Text>
                 <Text style={styles.modalText}>
-                  <Text style={styles.boldText}>City:</Text> {selectedUser.city || 'N/A'}
+                  <Text style={styles.boldText}>City:</Text>{" "}
+                  {selectedUser.city || "N/A"}
                 </Text>
                 <Text style={styles.modalText}>
-                  <Text style={styles.boldText}>Address:</Text> {selectedUser.address || 'N/A'}
+                  <Text style={styles.boldText}>Address:</Text>{" "}
+                  {selectedUser.address || "N/A"}
                 </Text>
               </>
             )}
@@ -244,32 +268,38 @@ const StaffManagedAppointments = ({
       <Modal visible={isStaffModalOpen} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Pressable 
-              style={styles.closeButton} 
+            <TouchableOpacity
+              style={styles.closeButton}
+              activeOpacity={0.7}
               onPress={() => {
                 setIsStaffModalOpen(false);
                 setSelectedStaff(null);
               }}
             >
               <Text style={styles.closeButtonText}>×</Text>
-            </Pressable>
+            </TouchableOpacity>
             <Text style={styles.modalTitle}>Staff Details</Text>
             {selectedStaff && (
               <>
                 <Text style={styles.modalText}>
-                  <Text style={styles.boldText}>Staff ID:</Text> {selectedStaff.staffId}
+                  <Text style={styles.boldText}>Staff ID:</Text>{" "}
+                  {selectedStaff.staffId}
                 </Text>
                 <Text style={styles.modalText}>
-                  <Text style={styles.boldText}>Full Name:</Text> {selectedStaff.fullName}
+                  <Text style={styles.boldText}>Full Name:</Text>{" "}
+                  {selectedStaff.fullName}
                 </Text>
                 <Text style={styles.modalText}>
-                  <Text style={styles.boldText}>Email:</Text> {selectedStaff.email}
+                  <Text style={styles.boldText}>Email:</Text>{" "}
+                  {selectedStaff.email}
                 </Text>
                 <Text style={styles.modalText}>
-                  <Text style={styles.boldText}>Phone:</Text> {selectedStaff.phoneNumber}
+                  <Text style={styles.boldText}>Phone:</Text>{" "}
+                  {selectedStaff.phoneNumber}
                 </Text>
                 <Text style={styles.modalText}>
-                  <Text style={styles.boldText}>Role:</Text> {selectedStaff.role}
+                  <Text style={styles.boldText}>Role:</Text>{" "}
+                  {selectedStaff.role}
                 </Text>
               </>
             )}
@@ -281,27 +311,18 @@ const StaffManagedAppointments = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
+  container: { flex: 1, padding: 16 },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  filterContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  title: { fontSize: 20, fontWeight: "bold" },
+  filterContainer: { flexDirection: "row", alignItems: "center" },
   searchInput: {
     height: 40,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 8,
@@ -310,124 +331,64 @@ const styles = StyleSheet.create({
   },
   pickerContainer: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 8,
     height: 40,
-    justifyContent: 'center',
+    justifyContent: "center",
     width: 150,
   },
-  picker: {
-    height: 40,
-    width: '100%',
-  },
+  picker: { height: 40, width: "100%" },
   tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#f0f0f0',
+    flexDirection: "row",
+    backgroundColor: "#f0f0f0",
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: "#ddd",
   },
-  headerText: {
-    fontWeight: 'bold',
-    width: 120,
-    textAlign: 'center',
-  },
+  headerText: { fontWeight: "bold", width: 120, textAlign: "center" },
   row: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
-  cell: {
-    width: 120,
-    textAlign: 'center',
-    paddingHorizontal: 4,
-  },
-  pending: {
-    color: '#FFA500', // Orange
-  },
-  accepted: {
-    color: '#008000', // Green
-  },
-  cancelled: {
-    color: '#FF0000', // Red
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
+  cell: { width: 120, textAlign: "center", paddingHorizontal: 4 },
+  pending: { color: "#FFA500" },
+  accepted: { color: "#008000" },
+  cancelled: { color: "#FF0000" },
+  actionButtons: { flexDirection: "row", justifyContent: "center" },
   button: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 4,
-    marginHorizontal: 2,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 6,
+    marginHorizontal: 4,
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 12,
-  },
-  acceptButton: {
-    backgroundColor: '#008000',
-  },
-  rejectButton: {
-    backgroundColor: '#FF0000',
-  },
-  logsButton: {
-    backgroundColor: '#1E90FF',
-  },
-  linkText: {
-    color: '#1E90FF',
-    textDecorationLine: 'underline',
-  },
-  noAppointments: {
-    textAlign: 'center',
-    marginTop: 20,
-    fontSize: 16,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 16,
-  },
+  buttonText: { color: "#fff", fontSize: 13, fontWeight: "600" },
+  acceptButton: { backgroundColor: "#008000" },
+  rejectButton: { backgroundColor: "#FF0000" },
+  logsButton: { backgroundColor: "#1E90FF" },
+  linkText: { color: "#1E90FF", textDecorationLine: "underline" },
+  noAppointments: { textAlign: "center", marginTop: 20, fontSize: 16 },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  errorContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  errorText: { color: "red", fontSize: 16 },
   modalOverlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     padding: 20,
     borderRadius: 10,
-    width: '80%',
+    width: "80%",
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  modalText: {
-    marginBottom: 8,
-  },
-  boldText: {
-    fontWeight: 'bold',
-  },
-  closeButton: {
-    alignSelf: 'flex-end',
-  },
-  closeButtonText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
+  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 16 },
+  modalText: { marginBottom: 8 },
+  boldText: { fontWeight: "bold" },
+  closeButton: { alignSelf: "flex-end" },
+  closeButtonText: { fontSize: 20, fontWeight: "bold" },
 });
 
 export default StaffManagedAppointments;

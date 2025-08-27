@@ -21,7 +21,7 @@ const AdminReviews = ({ reviews }) => {
       <Icon
         key={index}
         name={index < rating ? "star" : "star-o"}
-        size={16}
+        size={14}
         color={index < rating ? "#fbbf24" : "#d1d5db"}
         style={styles.star}
       />
@@ -57,7 +57,7 @@ const AdminReviews = ({ reviews }) => {
             <View style={styles.reviewHeader}>
               <View style={styles.reviewer}>
                 <View style={styles.avatarContainer}>
-                  <Icon1 name="user" size={20} color="#6b7280" />
+                  <Icon1 name="user" size={16} color="#6b7280" />
                 </View>
                 <View style={styles.reviewerInfo}>
                   <Text style={styles.reviewerName}>{review.name}</Text>
@@ -75,8 +75,8 @@ const AdminReviews = ({ reviews }) => {
                 onPress={() => setSelectedProperty(review.property)}
                 style={styles.propertyButton}
               >
-                <Icon name="home" size={14} color="#3b82f6" />
-                <Text style={styles.propertyLink}>View Property</Text>
+                <Icon name="home" size={12} color="#3b82f6" />
+                <Text style={styles.propertyLink}>View</Text>
               </TouchableOpacity>
             </View>
 
@@ -84,7 +84,9 @@ const AdminReviews = ({ reviews }) => {
 
             <View style={styles.propertyPreview}>
               <Icon name="building" size={12} color="#6b7280" />
-              <Text style={styles.propertyTitle}>{review.property.title}</Text>
+              <Text style={styles.propertyTitle} numberOfLines={1}>
+                {review.property.title}
+              </Text>
             </View>
           </View>
         ))}
@@ -185,43 +187,43 @@ const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
-    padding: 24,
+    padding: 16,
     backgroundColor: '#f8fafc',
     minHeight: '100%',
   },
 
   headerContainer: {
-    marginBottom: 32,
+    marginBottom: 24,
     alignItems: 'center',
   },
 
   header: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: '700',
     color: '#1e293b',
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: 'center',
   },
 
   subheader: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#64748b',
     fontWeight: '500',
   },
 
   reviewsContainer: {
-    gap: 20,
+    gap: 16,
   },
 
   reviewCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
@@ -230,24 +232,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: 12,
   },
 
   reviewer: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    marginRight: 8,
   },
 
   avatarContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#f1f5f9',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
-    borderWidth: 2,
+    marginRight: 10,
+    borderWidth: 1,
     borderColor: '#e2e8f0',
   },
 
@@ -256,16 +259,16 @@ const styles = StyleSheet.create({
   },
 
   reviewerName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#1e293b',
-    marginBottom: 4,
+    marginBottom: 3,
   },
 
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
 
   stars: {
@@ -274,43 +277,45 @@ const styles = StyleSheet.create({
   },
 
   star: {
-    marginRight: 2,
+    marginRight: 1,
   },
 
   ratingText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
-    marginLeft: 4,
+    marginLeft: 3,
   },
 
   propertyButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#eff6ff',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: '#bfdbfe',
-    gap: 6,
+    gap: 4,
+    minWidth: 60,
+    justifyContent: 'center',
   },
 
   propertyLink: {
     color: '#3b82f6',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
   },
 
   comment: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#475569',
-    lineHeight: 22,
-    marginBottom: 16,
+    lineHeight: 20,
+    marginBottom: 12,
     fontStyle: 'italic',
     backgroundColor: '#f8fafc',
-    padding: 16,
-    borderRadius: 12,
-    borderLeftWidth: 4,
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 3,
     borderLeftColor: '#e2e8f0',
   },
 
@@ -318,20 +323,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f8fafc',
-    padding: 12,
-    borderRadius: 8,
+    padding: 10,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    gap: 8,
+    gap: 6,
   },
 
   propertyTitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#64748b',
     fontWeight: '500',
     flex: 1,
   },
 
+  // Modal styles remain unchanged
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',

@@ -13,11 +13,10 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "react-native";
 import { useRouter } from "expo-router";
-import { useDispatch, useSelector } from 'react-redux';
-import { useEffect } from 'react';
-import { Platform, Alert } from 'react-native';
-import { initializeAuth, performLogout } from '@/redux/Auth/AuthSlice'; // Adjust the import path
-const router = useRouter();
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect } from "react";
+import { Platform, Alert } from "react-native";
+import { initializeAuth, performLogout } from "@/redux/Auth/AuthSlice";
 
 const Sidebar = ({
   visible,
@@ -28,6 +27,10 @@ const Sidebar = ({
 }) => {
   const [slideAnim] = useState(new Animated.Value(-280));
   const scrollViewRef = useRef(null);
+  const router = useRouter();
+
+  // // Debug: Add console logs to track re-renders
+  // console.log('Sidebar re-rendered, visible:', visible);
 
   // Use a more robust approach to track sidebar state
   const sidebarState = useRef({
@@ -39,7 +42,8 @@ const Sidebar = ({
   // Memoize animation functions to prevent recreating them
   const openSidebar = useCallback(() => {
     if (sidebarState.current.isAnimating) return;
-
+    
+    // console.log('Opening sidebar');
     sidebarState.current.isAnimating = true;
     Animated.timing(slideAnim, {
       toValue: 0,
@@ -55,6 +59,7 @@ const Sidebar = ({
   const closeSidebar = useCallback(() => {
     if (sidebarState.current.isAnimating) return;
 
+    // console.log('Closing sidebar');
     sidebarState.current.isAnimating = true;
     Animated.timing(slideAnim, {
       toValue: -280,
@@ -68,6 +73,7 @@ const Sidebar = ({
 
   // Only handle actual visibility changes
   React.useEffect(() => {
+    // console.log('Visibility effect triggered, visible:', visible, 'isOpen:', sidebarState.current.isOpen);
     if (
       visible &&
       !sidebarState.current.isOpen &&
@@ -86,6 +92,7 @@ const Sidebar = ({
   // Memoize handlers to prevent unnecessary re-renders
   const handleNavigation = useCallback(
     (route) => {
+      // console.log('Navigating to:', route);
       router.push(route);
       onClose();
     },
@@ -93,10 +100,12 @@ const Sidebar = ({
   );
 
   const handleClose = useCallback(() => {
+    // console.log('Handle close called');
     onClose();
   }, [onClose]);
 
   const handleSearch = useCallback(() => {
+    // console.log('Handle search called');
     if (onSearch) {
       onSearch();
     }
@@ -105,70 +114,61 @@ const Sidebar = ({
   // Memoize the search query handler
   const handleSearchQueryChange = useCallback(
     (text) => {
+      // console.log('Search query changed:', text);
       setSearchQuery(text);
     },
     [setSearchQuery]
   );
 
-
-
-
   //logout handler
+  const dispatch = useDispatch();
+  const { userData, authUser, userType } = useSelector((state) => state.auth);
 
-      const dispatch = useDispatch();
-    // const router = useRouter();
-    const { userData, authUser, userType } = useSelector((state) => state.auth);
-  
-    // Initialize authentication on component mount
-    useEffect(() => {
-      dispatch(initializeAuth());
-    }, [dispatch]);
-  
-    // Redirect to login if not authenticated
-    useEffect(() => {
-      if (userType !== 'user' || !authUser) {
-        router.replace('/(screens)');
+  // Initialize authentication on component mount - but only once
+  useEffect(() => {
+    // console.log('Initializing auth');
+    dispatch(initializeAuth());
+  }, [dispatch]);
+
+  // Remove the problematic redirect effect entirely for now
+  // useEffect(() => {
+  //   if (userType !== "user" || !authUser) {
+  //     router.replace("/(screens)");
+  //   }
+  // }, [authUser, router, userType]);
+
+  const handleLogout = useCallback(() => {
+    // console.log('Logout initiated');
+    // For web
+    if (Platform.OS === "web") {
+      const confirmLogout = window.confirm("Are you sure you want to logout?");
+      if (confirmLogout) {
+        // console.log("Logging out...");
+        dispatch(performLogout());
+        router.replace("/(screens)");
       }
-    }, [authUser, router, userType]);
-  
-      const handleLogout = () => {
-        // For web
-        if (Platform.OS === 'web') {
-          const confirmLogout = window.confirm('Are you sure you want to logout?');
-          if (confirmLogout) {
-            console.log("Logging out...");
-            dispatch(performLogout());
-            router.replace('/(screens)');
+      return;
+    }
+
+    // For mobile (iOS/Android)
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            // console.log("Logging out...");
+            await dispatch(performLogout()).unwrap();
+            router.replace("/(screens)");
+          } catch (error) {
+            // console.error("Logout error:", error);
+            Alert.alert("Error", "Failed to logout. Please try again.");
           }
-          return;
-        }
-    
-        // For mobile (iOS/Android)
-        Alert.alert(
-          'Logout',
-          'Are you sure you want to logout?',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Logout',
-              style: 'destructive',
-              onPress: async () => {
-                try {
-                  console.log("Logging out...");
-                  await dispatch(performLogout()).unwrap();
-                  router.replace('/(screens)');
-                } catch (error) {
-                  console.error('Logout error:', error);
-                  Alert.alert('Error', 'Failed to logout. Please try again.');
-                }
-              },
-            },
-          ]
-        );
-      };
-    
-  
-  
+        },
+      },
+    ]);
+  }, [dispatch, router]);
 
   // Memoize menu items to prevent recreation
   const menuItems = useMemo(
@@ -199,7 +199,6 @@ const Sidebar = ({
         icon: "hammer-outline",
         text: "Contractors",
       },
-
       {
         route: "/(screens)/user/user-appointment",
         icon: "calendar-outline",
@@ -235,16 +234,6 @@ const Sidebar = ({
         icon: "notifications-outline",
         text: "Notification",
       },
-      // { route: "/(screens)/logout", icon: "log-out-outline", text: "Logout" },
-
-      // { route: '/(screens)/(services)/pre-purchaseServices', icon: 'checkmark-done-outline', text: 'Pre-Purchase Property Services' },
-      // { route: '/(screens)/(profile)/profile', icon: 'person-outline', text: 'Profile' },
-      // { route: '/(screens)/(help)/help', icon: 'help-circle-outline', text: 'Help' },
-      {
-        route: "/(screens)/services/settings",
-        icon: "settings-outline",
-        text: "Settings",
-      },
       {
         route: "/(screens)/services/about",
         icon: "information-circle-outline",
@@ -253,89 +242,13 @@ const Sidebar = ({
     ],
     []
   );
-    const memoizedStyles = useMemo(() => styles, []);
-  
-
-  const SidebarContent = React.memo(() => (
-    <View style={styles.sidebarContent}>
-      {/* Sidebar Header */}
-      <View style={styles.sidebarHeader}>
-        <Image
-          source={require("../../assets/images/logo.png")}
-          style={styles.sidebarLogo}
-        />
-        <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-          <Ionicons name="close" size={24} color="#333" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Search Section in Sidebar */}
-      <View style={styles.sidebarSearchContainer}>
-        <View style={styles.sidebarSearch}>
-          <Ionicons
-            name="search"
-            size={20}
-            color="#666"
-            style={styles.searchIcon}
-          />
-          <TextInput
-            style={styles.sidebarSearchInput}
-            placeholder="Search..."
-            value={searchQuery}
-            onChangeText={handleSearchQueryChange}
-            placeholderTextColor="#999"
-          />
-          <TouchableOpacity
-            onPress={handleSearch}
-            style={styles.sidebarSearchButton}
-          >
-            <Ionicons name="arrow-forward" size={20} color="#007bff" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Scrollable Navigation Menu */}
-      <ScrollView
-        ref={scrollViewRef}
-        style={styles.scrollableMenuContainer}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.menuContentContainer}
-        keyboardShouldPersistTaps="handled"
-        scrollEventThrottle={100}
-        removeClippedSubviews={true}
-        maxToRenderPerBatch={10}
-        initialNumToRender={10}
-        windowSize={10}
-      >
-        {menuItems.map((item, index) => (
-          <TouchableOpacity
-            key={`menu-${index}`}
-            style={styles.menuItem}
-            onPress={() => handleNavigation(item.route)}
-          >
-            <Ionicons name={item.icon} size={24} color="#333" />
-            <Text style={styles.menuText}>{item.text}</Text>
-          </TouchableOpacity>
-        ))}
-      <TouchableOpacity
-        onPress={handleLogout}
-        style={styles.logoutButton}
-      >
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
-      </ScrollView>
-
-      {/* Fixed Sidebar Footer */}
-      <View style={styles.sidebarFooter}>
-        <Text style={styles.footerText}>BasilAbode v1.0</Text>
-      </View>
-    </View>
-  ));
 
   // Don't render the modal if it's not visible to improve performance
   if (!visible) {
     return null;
   }
+
+  // console.log('Rendering sidebar modal');
 
   return (
     <Modal
@@ -361,34 +274,103 @@ const Sidebar = ({
             },
           ]}
         >
-          <SidebarContent />
+          <View style={styles.sidebarContent}>
+            {/* Sidebar Header */}
+            <View style={styles.sidebarHeader}>
+              <Image
+                source={require("../../assets/images/logo.png")}
+                style={styles.sidebarLogo}
+              />
+              <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Search Section in Sidebar */}
+            {/* <View style={styles.sidebarSearchContainer}>
+              <View style={styles.sidebarSearch}>
+                <Ionicons
+                  name="search"
+                  size={20}
+                  color="#666"
+                  style={styles.searchIcon}
+                />
+                <TextInput
+                  style={styles.sidebarSearchInput}
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChangeText={handleSearchQueryChange}
+                  placeholderTextColor="#999"
+                />
+                <TouchableOpacity
+                  onPress={handleSearch}
+                  style={styles.sidebarSearchButton}
+                >
+                  <Ionicons name="arrow-forward" size={20} color="#007bff" />
+                </TouchableOpacity>
+              </View>
+            </View> */}
+
+            {/* Scrollable Navigation Menu */}
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.scrollableMenuContainer}
+              contentContainerStyle={styles.menuContentContainer}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              removeClippedSubviews={false}
+              nestedScrollEnabled={false}
+              // Add onScroll handler to debug
+              onScroll={(event) => {
+                // console.log('ScrollView scroll event:', event.nativeEvent.contentOffset.y);
+              }}
+              scrollEventThrottle={100}
+            >
+              {menuItems.map((item, index) => (
+                <TouchableOpacity
+                  key={`menu-${index}`}
+                  style={styles.menuItem}
+                  onPress={() => handleNavigation(item.route)}
+                >
+                  <Ionicons name={item.icon} size={24} color="#333" />
+                  <Text style={styles.menuText}>{item.text}</Text>
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+                <Text style={styles.logoutText}>Logout</Text>
+              </TouchableOpacity>
+            </ScrollView>
+
+            {/* Fixed Sidebar Footer */}
+            <View style={styles.sidebarFooter}>
+              <Text style={styles.footerText}>BasilAbode v1.0</Text>
+            </View>
+          </View>
         </Animated.View>
       </View>
     </Modal>
   );
 };
 
-
-
 const styles = StyleSheet.create({
-   logoutButton: {
-    backgroundColor: '#FF3B30', // iOS-style red for destructive actions
+  logoutButton: {
+    backgroundColor: "#FF3B30",
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 3, // for Android shadow
+    elevation: 3,
   },
   logoutText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     letterSpacing: 0.5,
   },
   overlay: {

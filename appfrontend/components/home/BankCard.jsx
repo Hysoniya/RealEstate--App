@@ -27,9 +27,9 @@ const BankCard = ({ bankName, logo, rating, loanProducts, interestRate }) => {
           <Text style={styles.products}>{loanProducts}+ Loan Products</Text>
           <Text style={styles.interestRate}>Starting from {interestRate}%</Text>
         </View>
-        <TouchableOpacity style={styles.viewButton}>
+        {/* <TouchableOpacity style={styles.viewButton}>
           <Text style={styles.viewButtonText}>View Offers</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </View>
   );

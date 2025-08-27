@@ -23,6 +23,7 @@ const BankingPartnerRouter = require("./routes/BankingPartner.js");
 const contractorRoutes = require("./routes/contractorRoutes.js");
 const { authenticate, checkAuth } = require("./middleware/authenticate");
 const AuthRoutes = require("./routes/AuthRoutes.js");
+const builderRoutes = require("./routes/BuilderRoutes.js");
 
 
 require("dotenv").config();
@@ -63,6 +64,8 @@ app.use("/api/title-search", TitleSearch);
 app.use("/api/Pre-Purchase-Property-Verification", PrePurchaseProVerRouter);
 app.use("/api/banking-partners", BankingPartnerRouter);
 app.use("/api/auth", AuthRoutes);
+app.use("/api/builders", builderRoutes);
+
 
 
 // app.use("/api/staff", staffRoutes);

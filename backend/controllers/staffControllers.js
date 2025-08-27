@@ -49,7 +49,7 @@ staffRouter.post("/signup", authenticate, authorizeAdmin, async (req, res) => {
 });
 
 // get all staff details
-staffRouter.get("/all", authenticate, authorizeAdmin, async (req, res) => {
+staffRouter.get("/all", async (req, res) => {
   try {
     const staffList = await Staff.find().select("-password");
     res.status(200).send(staffList);
@@ -59,9 +59,9 @@ staffRouter.get("/all", authenticate, authorizeAdmin, async (req, res) => {
 });
 
 // delete staff account
-staffRouter.delete("/:id", authenticate, authorizeAdmin, async (req, res) => {
+staffRouter.delete("/:id",async (req, res) => {
   const staffId = req.params.id;
-
+  console.log("REQ")
   try {
     const deletedStaff = await Staff.findByIdAndDelete(staffId);
 

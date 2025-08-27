@@ -85,15 +85,33 @@ const Post = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["image"],
-      allowsMultipleSelection: true,
-      quality: 1,
-    });
+   const handleImageChange = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Toast.show({
+          type: 'error',
+          text1: 'Permission required',
+          text2: 'We need access to your photos to upload images'
+        });
+        return;
+      }
 
-    if (!result.canceled) {
-      setSelectedImages((prev) => [...prev, ...result.assets]);
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaType.Images,
+        allowsMultipleSelection: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled) {
+        setSelectedImages(prev => [...prev, ...result.assets]);
+      }
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error selecting images',
+        text2: error.message
+      });
     }
   };
 
@@ -101,66 +119,73 @@ const Post = () => {
     setSelectedImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async () => {
-    setLoading(true);
-    const combinedFormData = new FormData();
+const handleSubmit = async () => {
+  setLoading(true);
+  
+  try {
+    const formDataToSend = new FormData();
 
-    const updatedFormData = {
-      ...formData,
-      other_rooms: {
-        studyRoom: formData.studyRoom,
-        poojaRoom: formData.poojaRoom,
-        servantRoom: formData.servantRoom,
-        storeRoom: formData.storeRoom,
-      },
-    };
-
-    Object.entries(updatedFormData).forEach(([key, value]) => {
-      if (typeof value === "object" && !Array.isArray(value)) {
-        combinedFormData.append(key, JSON.stringify(value));
-      } else if (Array.isArray(value)) {
-        value.forEach((v) => combinedFormData.append(key, v));
-      } else {
-        combinedFormData.append(key, String(value));
+    // Add all form fields
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        // Convert booleans to strings
+        if (typeof value === 'boolean') {
+          formDataToSend.append(key, value ? 'true' : 'false');
+        } 
+        // Handle other_rooms object
+        else if (key === 'other_rooms') {
+          formDataToSend.append(key, JSON.stringify({
+            studyRoom: formData.studyRoom,
+            poojaRoom: formData.poojaRoom,
+            servantRoom: formData.servantRoom, // Note: Fix typo here (servant vs servent)
+            storeRoom: formData.storeRoom,
+          }));
+        }
+        else {
+          formDataToSend.append(key, String(value));
+        }
       }
     });
 
-    selectedImages.forEach((image) => {
-      combinedFormData.append("propertyImage", {
+    // Add images with proper formatting
+    selectedImages.forEach((image, index) => {
+      formDataToSend.append('propertyImage', {
         uri: image.uri,
-        name: image.fileName || "photo.jpg",
-        type: image.type || "image/jpeg",
+        name: `property_${Date.now()}_${index}.jpg`,
+        type: 'image/jpeg',
       });
     });
 
-    try {
+    const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+    
+    const response = await axios.post(`${BASE_URL}/api/property`, formDataToSend, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      transformRequest: () => formDataToSend, // Important for FormData
+    });
 
-     
-
-      const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-      await axios.post(`${BASE_URL}/api/property`, combinedFormData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+    if (response.status === 201) {
+      Toast.show({
+        type: 'success',
+        text1: 'Success!',
+        text2: 'Property listed successfully'
       });
-
-      
-      Toast.show({
-      type: 'success',
-      text1: 'Property listed successfully!'
-    });
-      // router.push('/user');
-      router.back()
-    } catch (err) {
-      console.error(err);
-      
-      Toast.show({
-      type: 'error',
-      text1: 'Failed to list property'
-    });
-
-    } finally {
-      setLoading(false);
+      router.back();
+    } else {
+      throw new Error(response.data.message || 'Server error');
     }
-  };
+  } catch (error) {
+    console.error('Submission error:', error);
+    Toast.show({
+      type: 'error',
+      text1: 'Error',
+      text2: error.response?.data?.error || 'Failed to submit property',
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   const renderPropertyProfileForm = () => {
     switch (formData.propertyType) {
@@ -231,20 +256,19 @@ const Post = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#667eea" />
       <LinearGradient colors={["#667eea", "#764ba2"]} style={styles.gradient}>
-
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
         >
           {/* Header Box */}
           <View style={styles.headerBox}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{ marginRight: 12, padding: 4 }}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={28} color="white" />
-        </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={{ marginRight: 12, padding: 4 }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <MaterialCommunityIcons name="arrow-left" size={28} color="white" />
+            </TouchableOpacity>
             <Text style={styles.headerTitle}>
               Few more steps to post your property
             </Text>

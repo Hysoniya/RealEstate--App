@@ -12,12 +12,11 @@ import {
 import { useRouter } from "expo-router";
 import { jwtDecode } from "jwt-decode";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import LottieView from "lottie-react-native";
-import Navbar from "@/components/home/Navbar";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
+// Replace LottieView with a GIF-based animation
+const EMPTY_STATE_GIF = require("@/assets/images/no-property.png"); // 👈 Add your own GIF here
 
-// -- Placeholder for your BuilderPropertyCard; adjust as needed
 const BuilderPropertyCard = ({ title, city, price, area, imageUrl, onPress, status }) => (
   <TouchableOpacity style={styles.card} onPress={onPress}>
     <Image source={{ uri: imageUrl }} style={styles.cardImage} />
@@ -48,7 +47,6 @@ const Navbar_local = () => {
   );
 };
 
-
 const UserProperties = () => {
   const [properties, setProperties] = useState([]);
   const [stats, setStats] = useState({
@@ -58,12 +56,12 @@ const UserProperties = () => {
   });
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL; // Change to actual API root
+  const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
     (async () => {
       try {
-        let token = await AsyncStorage.getItem("authToken");
+        const token = await AsyncStorage.getItem("authToken");
         let email = "";
         if (token) {
           try {
@@ -74,13 +72,7 @@ const UserProperties = () => {
           }
         }
         if (!email) return;
-        const response = await fetch(
-          `${API_URL}/api/property-user/${email}`,
-          {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          }
-        );
+        const response = await fetch(`${API_URL}/api/property-user/${email}`);
         if (!response.ok) throw new Error("Failed to fetch properties");
         const result = await response.json();
         setProperties(result.data || []);
@@ -97,83 +89,75 @@ const UserProperties = () => {
     })();
   }, []);
 
-  // No Navbar/Sidebar in RN: you may use a header or tab navigation
-
   return (
-        <View style={{ flex: 1, backgroundColor: "#f4f4fa" }}>
-    
-        {/* <Navbar /> */}
-        <Navbar_local />
-    <View style={styles.container}>
-      <ScrollView>
-        <Text style={styles.header}>Your Properties</Text>
-        {loading ? (
-          <ActivityIndicator size="large" style={{ marginTop: 30 }} />
-        ) : properties.length > 0 ? (
-          <>
-            <View style={styles.statsContainer}>
-              <View style={styles.statCard}>
-                <Text style={styles.statLabel}>Total Properties Hosted</Text>
-                <Text style={styles.statValue}>{stats.totalHosted}</Text>
-              </View>
-              <View style={styles.statCard}>
-                <Text style={styles.statLabel}>Total Properties Sold / Rented</Text>
-                <Text style={styles.statValue}>{stats.totalSoldOrRented}</Text>
-              </View>
-              <View style={styles.statCard}>
-                <Text style={styles.statLabel}>Available Properties</Text>
-                <Text style={styles.statValue}>{stats.availableProperties}</Text>
-              </View>
-            </View>
-
-            <View style={styles.propertiesGrid}>
-              {properties.map((property) => (
-                <View key={property._id} style={styles.cardWrapper}>
-                  <BuilderPropertyCard
-                    title={property.title}
-                    city={property.city}
-                    price={property.price?.toString()}
-                    area={property.area?.toString()}
-                    imageUrl={property.image}
-                    status={property.status}
-                    onPress={() =>
-                      router.push(`/property-details-page/${property._id}`)
-                    }
-                  />
-                  <TouchableOpacity
-                    style={styles.detailsButton}
-                    onPress={() =>
-                      router.push(`/property-details-page/${property._id}`)
-                    }
-                  >
-                    <Text style={styles.detailsText}>View Details</Text>
-                  </TouchableOpacity>
+    <View style={{ flex: 1, backgroundColor: "#f4f4fa" }}>
+      <Navbar_local />
+      <View style={styles.container}>
+        <ScrollView>
+          <Text style={styles.header}>Your Properties</Text>
+          {loading ? (
+            <ActivityIndicator size="large" style={{ marginTop: 30 }} />
+          ) : properties.length > 0 ? (
+            <>
+              <View style={styles.statsContainer}>
+                <View style={styles.statCard}>
+                  <Text style={styles.statLabel}>Total Properties Hosted</Text>
+                  <Text style={styles.statValue}>{stats.totalHosted}</Text>
                 </View>
-              ))}
+                <View style={styles.statCard}>
+                  <Text style={styles.statLabel}>Total Properties Sold / Rented</Text>
+                  <Text style={styles.statValue}>{stats.totalSoldOrRented}</Text>
+                </View>
+                <View style={styles.statCard}>
+                  <Text style={styles.statLabel}>Available Properties</Text>
+                  <Text style={styles.statValue}>{stats.availableProperties}</Text>
+                </View>
+              </View>
+
+              <View style={styles.propertiesGrid}>
+                {properties.map((property) => (
+                  <View key={property._id} style={styles.cardWrapper}>
+                    <BuilderPropertyCard
+                      title={property.title}
+                      city={property.city}
+                      price={property.price?.toString()}
+                      area={property.area?.toString()}
+                      imageUrl={property.image}
+                      status={property.status}
+                      onPress={() =>
+                        router.push(`/property-details-page/${property._id}`)
+                      }
+                    />
+                    <TouchableOpacity
+                      style={styles.detailsButton}
+                      onPress={() =>
+                        router.push(`/property-details-page/${property._id}`)
+                      }
+                    >
+                      <Text style={styles.detailsText}>View Details</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            </>
+          ) : (
+            <View style={styles.emptyState}>
+              <Image
+                source={EMPTY_STATE_GIF}
+                style={{ width: 300, height: 250 }}
+                resizeMode="contain"
+              />
+              <Text style={styles.emptyTitle}>
+                You haven’t bought or sold any property yet!
+              </Text>
+              <Text style={styles.emptyDesc}>
+                All the properties and projects that you have bought or sold will start appearing here. Search or explore cities now.
+              </Text>
             </View>
-          </>
-        ) : (
-          <View style={styles.emptyState}>
-            <LottieView
-              source={{
-                uri:
-                  "https://lottie.host/fc9fb0d0-1766-4e25-8483-ba9f9fa545f6/rNwcjg5a6Q.json",
-              }}
-              autoPlay
-              loop
-              style={{ width: 300, height: 250 }}
-            />
-            <Text style={styles.emptyTitle}>
-              You haven’t bought or sold any property yet!
-            </Text>
-            <Text style={styles.emptyDesc}>
-              All the properties and projects that you have bought or sold will start appearing here. Search or explore cities now.
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+          )}
+        </ScrollView>
+      </View>
     </View>
-    </View> 
   );
 };
 
@@ -280,4 +264,3 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 });
-

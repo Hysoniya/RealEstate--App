@@ -35,11 +35,11 @@ const StaffSideBar = ({
       key: "pre-purchase-property-verification", 
       icon: "document-text" 
     },
-    { 
-      label: "Sales & Target Management", 
-      key: "sales-target-management", 
-      icon: "bar-chart" 
-    },
+    // { 
+    //   label: "Sales & Target Management", 
+    //   key: "sales-target-management", 
+    //   icon: "bar-chart" 
+    // },
   ];
 
   const SidebarContent = () => (

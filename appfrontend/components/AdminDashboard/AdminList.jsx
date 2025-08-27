@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+// AdminList.jsx
+import React from "react";
 import {
   View,
   Text,
@@ -7,192 +8,135 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Platform,
+  ScrollView,
+  Dimensions,
 } from "react-native";
 
-const AdminList = ({ onAddAdminClick }) => {
-  const [admins, setAdmins] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+const { width: screenWidth } = Dimensions.get('window');
 
-  // Replace this URL with your actual API endpoint
-  const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const AdminList = ({ admins, onAddAdminClick, handleRemoveAdmin, loading, error, refreshAdmins }) => {
+  // Filter out any undefined/null items and ensure each item has an _id
+  const validAdmins = (admins || []).filter(admin => admin && admin._id);
 
-  // Fetch admins from the API
-  const fetchAdmins = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await fetch(`${API_BASE_URL}/admins`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          // Add authorization header if needed
-          // 'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+  const confirmDelete = async (adminId) => {
+    if (Platform.OS === 'web') {
+      const ok = window.confirm('Are you sure you want to delete this admin?');
+      if (ok) {
+        await handleRemoveAdmin(adminId);
+        refreshAdmins();
       }
-
-      const data = await response.json();
-      
-      // Assuming the API returns an array of admins or { admins: [...] }
-      const adminList = Array.isArray(data) ? data : data.admins || [];
-      setAdmins(adminList);
-      
-    } catch (err) {
-      console.error('Error fetching admins:', err);
-      setError(`Failed to load admins: ${err.message}`);
-    } finally {
-      setLoading(false);
+    } else {
+      Alert.alert(
+        "Confirm Delete",
+        "Are you sure you want to delete this admin?",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: async () => {
+              await handleRemoveAdmin(adminId);
+              refreshAdmins();
+            }
+          },
+        ]
+      );
     }
   };
 
-  // Remove admin function
-  const handleRemoveAdmin = async (adminId) => {
-    Alert.alert(
-      "Confirm Delete",
-      "Are you sure you want to delete this admin?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setLoading(true);
-              
-              const response = await fetch(`${API_BASE_URL}/admins/${adminId}`, {
-                method: 'DELETE',
-                headers: {
-                  'Content-Type': 'application/json',
-                  // Add authorization header if needed
-                  // 'Authorization': `Bearer ${token}`,
-                },
-              });
+  const renderAdminItem = ({ item, index }) => {
+    // Additional safety check
+    if (!item || !item._id) {
+      return null;
+    }
 
-              if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-              }
-
-              // Remove the admin from local state
-              setAdmins(prevAdmins => 
-                prevAdmins.filter(admin => admin._id !== adminId)
-              );
-              
-              Alert.alert("Success", "Admin deleted successfully");
-              
-            } catch (err) {
-              console.error('Error deleting admin:', err);
-              Alert.alert("Error", `Failed to delete admin: ${err.message}`);
-            } finally {
-              setLoading(false);
-            }
-          }
-        }
-      ]
+    return (
+      <View style={[styles.tableRow, index % 2 === 1 && styles.tableRowEven]}>
+        <Text style={styles.indexCell}>{index + 1}</Text>
+        <View style={styles.nameContainer}>
+          <Text style={styles.nameCell} numberOfLines={1}>
+            {item.fullName || item.name || "N/A"}
+          </Text>
+          <Text style={styles.idCell} numberOfLines={1}>
+            ID: {item.adminId || item._id || "N/A"}
+          </Text>
+        </View>
+        <Text style={styles.emailCell} numberOfLines={2}>
+          {item.email || "N/A"}
+        </Text>
+        <View style={styles.actionCell}>
+          <TouchableOpacity
+            style={styles.deleteBtn}
+            onPress={() => confirmDelete(item._id)}
+            disabled={loading}
+          >
+            <Text style={styles.deleteBtnText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     );
   };
 
-  // Fetch admins when component mounts
-  useEffect(() => {
-    fetchAdmins();
-  }, []);
-
-  // Refresh function
-  const handleRefresh = () => {
-    fetchAdmins();
-  };
-
-  const renderAdminItem = ({ item: admin, index }) => (
-    <View style={[styles.tableRow, index % 2 === 1 && styles.tableRowEven]}>
-      <Text style={styles.tableCell}>{admin.adminId || 'N/A'}</Text>
-      <Text style={[styles.tableCell, styles.tableCellNumber]}>
-        {admin.buyersId?.length ?? 0}
-      </Text>
-      <Text style={[styles.tableCell, styles.tableCellNumber]}>
-        {admin.sellersId?.length ?? 0}
-      </Text>
-      <TouchableOpacity
-        style={styles.deleteBtn}
-        onPress={() => handleRemoveAdmin(admin._id)}
-        activeOpacity={0.7}
-        disabled={loading}
-      >
-        <Text style={styles.deleteBtnText}>Delete</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  const renderHeader = () => (
-    <View style={styles.tableHeader}>
-      <Text style={styles.tableHeaderCell}>Admin ID</Text>
-      <Text style={styles.tableHeaderCell}>Buyers</Text>
-      <Text style={styles.tableHeaderCell}>Sellers</Text>
-      <Text style={styles.tableHeaderCell}>Delete Account</Text>
-    </View>
-  );
-
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <Text style={styles.emptyStateText}>No admins found</Text>
-      <TouchableOpacity style={styles.refreshButton} onPress={handleRefresh}>
-        <Text style={styles.refreshButtonText}>Refresh</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
   return (
-    <View style={styles.adminList}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Admins</Text>
         <View style={styles.headerButtons}>
-          <TouchableOpacity 
-            style={styles.refreshButton} 
-            onPress={handleRefresh}
+          <TouchableOpacity
+            onPress={refreshAdmins}
             disabled={loading}
+            style={styles.refreshButton}
           >
             <Text style={styles.refreshButtonText}>Refresh</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.addButton} 
+          <TouchableOpacity
             onPress={onAddAdminClick}
             disabled={loading}
+            style={styles.addButton}
           >
             <Text style={styles.addButtonText}>Add Admin</Text>
           </TouchableOpacity>
         </View>
       </View>
-      
+
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#0000ff" />
+          <ActivityIndicator size="large" />
           <Text style={styles.loadingText}>Loading admins...</Text>
         </View>
       ) : error ? (
         <View style={styles.errorContainer}>
-          <Text style={styles.error}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
+          <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : (
-        <View style={styles.table}>
-          {renderHeader()}
-          <FlatList
-            data={admins} // Removed .reverse() - better to handle sorting on backend
-            renderItem={renderAdminItem}
-            keyExtractor={(item) => item._id}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={renderEmptyState}
-            refreshing={loading}
-            onRefresh={handleRefresh}
-          />
+        <View style={styles.tableContainer}>
+          <View style={styles.table}>
+            <View style={styles.tableHeader}>
+              <Text style={styles.indexHeader}>No.</Text>
+              <Text style={[styles.tableHeaderCell, styles.nameHeader]}>Name</Text>
+              <Text style={[styles.tableHeaderCell, styles.emailHeader]}>Email</Text>
+              <Text style={styles.actionHeader}>Action</Text>
+            </View>
+            <FlatList
+              data={validAdmins}
+              renderItem={renderAdminItem}
+              keyExtractor={(item, index) => item._id || `admin-${index}`}
+              showsVerticalScrollIndicator={true}
+              style={styles.flatList}
+              contentContainerStyle={styles.listContent}
+              ListEmptyComponent={() => (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyStateText}>No admins found</Text>
+                </View>
+              )}
+              // Add extra props for better error handling
+              removeClippedSubviews={false}
+              initialNumToRender={10}
+              maxToRenderPerBatch={10}
+              windowSize={10}
+            />
+          </View>
         </View>
       )}
     </View>
@@ -200,199 +144,199 @@ const AdminList = ({ onAddAdminClick }) => {
 };
 
 const styles = StyleSheet.create({
-  adminList: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#f8f9fa',
-    minHeight: '100%',
+  container: { 
+    flex: 1, 
+    backgroundColor: "#f8f9fa",
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-    paddingHorizontal: 4,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    letterSpacing: 0.5,
-  },
-  headerButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+    flexWrap: "wrap",
     gap: 12,
   },
-  addButton: {
-    backgroundColor: '#007bff',
+  title: { 
+    fontSize: 28, 
+    fontWeight: "bold", 
+    color: "#2c3e50",
+    minWidth: 100,
+  },
+  headerButtons: { 
+    flexDirection: "row", 
+    gap: 10,
+    flexWrap: "wrap",
+  },
+  refreshButton: { 
+    backgroundColor: "#28a745", 
+    paddingVertical: 12,
     paddingHorizontal: 20,
-    paddingVertical: 12,
     borderRadius: 25,
-    shadowColor: '#007bff',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    minWidth: 90,
   },
-  addButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
+  refreshButtonText: { 
+    color: "#fff", 
+    fontSize: 16, 
+    fontWeight: "600",
+    textAlign: "center",
   },
-  refreshButton: {
-    backgroundColor: '#28a745',
-    paddingHorizontal: 16,
+  addButton: { 
+    backgroundColor: "#007bff", 
     paddingVertical: 12,
+    paddingHorizontal: 20,
     borderRadius: 25,
-    shadowColor: '#28a745',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    minWidth: 110,
   },
-  refreshButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
+  addButtonText: { 
+    color: "#fff", 
+    fontSize: 16, 
+    fontWeight: "600",
+    textAlign: "center",
   },
-  loadingContainer: {
+  loadingContainer: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center" 
+  },
+  loadingText: { 
+    marginTop: 16, 
+    fontSize: 18, 
+    color: "#6c757d" 
+  },
+  errorContainer: { 
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    margin: 8,
-    padding: 40,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 18,
-    color: '#6c757d',
-    fontWeight: '500',
-  },
-  errorContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    justifyContent: "center", 
+    alignItems: "center",
     padding: 20,
-    alignItems: 'center',
   },
-  error: {
-    color: '#dc3545',
-    fontSize: 18,
-    fontWeight: '600',
+  errorText: { 
+    color: "#dc3545", 
+    fontSize: 18, 
     marginBottom: 16,
-    textAlign: 'center',
-    backgroundColor: '#f8d7da',
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#f5c6cb',
+    textAlign: "center",
   },
-  retryButton: {
-    backgroundColor: '#dc3545',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 25,
-  },
-  retryButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  emptyState: {
-    padding: 40,
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-  },
-  emptyStateText: {
-    fontSize: 18,
-    color: '#6c757d',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  table: {
-    backgroundColor: '#ffffff',
+  tableContainer: {
+    flex: 1,
+    backgroundColor: "#fff",
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    overflow: 'hidden',
+    overflow: "hidden",
+  },
+  table: { 
+    flex: 1,
   },
   tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#343a40',
+    flexDirection: "row",
+    backgroundColor: "#343a40",
     paddingVertical: 16,
     paddingHorizontal: 8,
   },
   tableHeaderCell: {
+    color: "#fff",
+    fontWeight: "700",
+    textAlign: "center",
+    fontSize: 14,
+  },
+  indexHeader: {
+    flex: 0.8,
+    color: "#fff",
+    fontWeight: "700",
+    textAlign: "center",
+    fontSize: 14,
+  },
+  nameHeader: {
+    flex: 2.5,
+  },
+  emailHeader: {
+    flex: 2.5,
+  },
+  actionHeader: {
+    flex: 1.2,
+    color: "#fff",
+    fontWeight: "700",
+    textAlign: "center",
+    fontSize: 14,
+  },
+  flatList: {
     flex: 1,
-    fontSize: 16,
-    fontWeight: '700',
-    textAlign: 'center',
-    color: '#ffffff',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  },
+  listContent: {
+    paddingBottom: 40,
+    flexGrow: 1,
   },
   tableRow: {
-    flexDirection: 'row',
-    paddingVertical: 16,
+    flexDirection: "row",
+    paddingVertical: 12,
     paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
+    borderColor: "#e9ecef",
+    alignItems: "center",
+    minHeight: 60,
   },
-  tableRowEven: {
-    backgroundColor: '#f8f9fa',
+  tableRowEven: { 
+    backgroundColor: "#f8f9fa" 
   },
-  tableCell: {
-    flex: 1,
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#495057',
-    fontWeight: '500',
+  indexCell: {
+    flex: 0.8,
+    textAlign: "center", 
+    fontSize: 14, 
+    color: "#28a745",
+    fontWeight: "bold",
   },
-  tableCellNumber: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#007bff',
+  nameContainer: {
+    flex: 2.5,
+    paddingHorizontal: 4,
+    alignItems: "center",
+  },
+  nameCell: {
+    textAlign: "center", 
+    fontSize: 14, 
+    fontWeight: "600", 
+    color: "#007bff",
+    marginBottom: 2,
+  },
+  idCell: {
+    textAlign: "center", 
+    fontSize: 11, 
+    color: "#6c757d",
+    fontStyle: "italic",
+  },
+  emailCell: {
+    flex: 2.5,
+    textAlign: "center", 
+    fontSize: 12, 
+    color: "#495057",
+    paddingHorizontal: 4,
+  },
+  actionCell: {
+    flex: 1.2,
+    alignItems: "center",
+    paddingHorizontal: 4,
   },
   deleteBtn: {
-    flex: 1,
-    backgroundColor: '#dc3545',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    alignItems: 'center',
-    marginHorizontal: 8,
-    shadowColor: '#dc3545',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: "#dc3545",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 15,
+    alignItems: "center",
+    minWidth: 60,
   },
-  deleteBtnText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  deleteBtnText: { 
+    color: "#fff", 
+    fontSize: 11, 
+    fontWeight: "600" 
+  },
+  emptyState: { 
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 60,
+  },
+  emptyStateText: { 
+    fontSize: 18, 
+    color: "#6c757d", 
+    textAlign: "center",
   },
 });
 

@@ -10,14 +10,17 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
 import { handlePropertyType } from "../../redux/SearchBox/SearchSlice";
+import { useRouter } from "expo-router"; 
+
 
 const PropertyTypeCard = ({ title, description, imageSrc }) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-
+  const router = useRouter();
   const handleClick = () => {
-    dispatch(handlePropertyType(title === "Plots" ? "Plot" : title));
-    navigation.navigate("Properties");
+    // dispatch(handlePropertyType(title === "Plots" ? "Plot" : title));
+    // navigation.navigate("Properties");
+    router.push("/(screens)/properties/allProperty")
   };
 
   return (

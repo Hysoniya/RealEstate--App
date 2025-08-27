@@ -81,6 +81,9 @@ export const login = (credentials) => async (dispatch) => {
       
       // Store token securely
       await AsyncStorage.setItem('authToken', token);
+      await AsyncStorage.setItem('email', userData.email);
+      // await AsyncStorage.setItem('email', userData.email);
+      // console.log("DATAAAAAAAAAAAAAAA",userData);
       
       dispatch(setAuthUser({
         authUser: true,
@@ -117,6 +120,29 @@ export const signup = (credentials) => async (dispatch) => {
     throw new Error('Signup failed: ' + (error.response?.data?.error || error.message));
   }
 };
+export const addEmployee = (credentials) => async (dispatch) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/api/auth/signup`, credentials);
+
+    // if (response.status === 200) {
+    //   const { token, userType, ...userData } = response.data;
+      
+    //   // Store token securely
+    //   await AsyncStorage.setItem('authToken', token);
+      
+    //   dispatch(setAuthUser({
+    //     authUser: true,
+    //     userData,
+    //     userType,
+    //     token
+    //   }));
+    //   return response.data;
+    // }
+      return response.data;
+  } catch (error) {
+    throw new Error('Signup failed: ' + (error.response?.data?.error || error.message));
+  }
+};
 
 // Add this to handle token persistence on app start
 export const initializeAuth = () => async (dispatch) => {
@@ -132,6 +158,7 @@ export const performLogout = createAsyncThunk(
   async (_, { dispatch }) => {
     try {
       await AsyncStorage.removeItem('authToken');
+      await AsyncStorage.removeItem('email');
       dispatch(logout()); // Call your existing logout reducer
       return true;
     } catch (error) {

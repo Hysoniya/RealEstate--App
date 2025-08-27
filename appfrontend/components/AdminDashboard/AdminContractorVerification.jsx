@@ -11,6 +11,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
+import { useRouter } from "expo-router";
+
 const AdminContractorVerification = ({
   contractors,
   loading,
@@ -31,8 +33,10 @@ const AdminContractorVerification = ({
     )
     .reverse();
 
-  const handleViewDetails = (contractorId) => {
-    navigation.navigate('ContractorDetails', { contractorId });
+    const router = useRouter();
+
+ const handleViewDetails = (contractorId) => {
+    router.push(`/services/contractors/${contractorId}`);
   };
 
   const handleImageError = (imageIndex, workIndex, contractorIndex) => {
